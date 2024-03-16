@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: rtems-proxy
+  title: rtems-proxy
+  description: Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs
+spec:
+  type: documentation
+  lifecycle: experimental
+  owner: group:default/sscc
