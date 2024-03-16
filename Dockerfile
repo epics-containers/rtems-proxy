@@ -22,6 +22,16 @@ FROM python:${PYTHON_VERSION}-slim as runtime
 COPY --from=build /venv-proxy/ /venv-proxy/
 ENV PATH=/venv-proxy/bin:$PATH
 
-# change this entrypoint if it is not the same as the repo
+# get a few necessary EPICS binaries
+ENV bin=/epics/epics-base/bin/linux-x86_64/
+ENV lib=/epics/epics-base/lib/linux-x86_64/
+COPY --from=ghcr.io/epics-containers/epics-base-runtime:7.0.8ec2b1 \
+     ${bin}/caget ${bin}/msi ${bin}/caput ${bin}/camonitor /usr/bin
+COPY --from=ghcr.io/epics-containers/epics-base-runtime:7.0.8ec2b1 \
+     ${lib}/libca.* ${lib}/libCom.* /usr/lib/
+
+# set up the IOC startup script
+COPY start.sh /start.sh
+
 ENTRYPOINT ["rtems-proxy"]
 CMD ["--version"]
