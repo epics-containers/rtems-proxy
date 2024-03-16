@@ -4,8 +4,8 @@ ARG PYTHON_VERSION=3.12
 FROM python:${PYTHON_VERSION} as developer
 
 # Set up a virtual environment and put it in PATH
-RUN python -m venv /venv
-ENV PATH=/venv/bin:$PATH
+RUN python -m venv /venv-proxy
+ENV PATH=/venv-proxy/bin:$PATH
 
 # The build stage installs the context into the venv
 FROM developer as build
@@ -18,9 +18,9 @@ RUN pip install -r requirements.txt
 
 # The runtime stage copies the built venv into a slim runtime container
 FROM python:${PYTHON_VERSION}-slim as runtime
-# Add apt-get system dependecies for runtime here if needed
-COPY --from=build /venv/ /venv/
-ENV PATH=/venv/bin:$PATH
+
+COPY --from=build /venv-proxy/ /venv-proxy/
+ENV PATH=/venv-proxy/bin:$PATH
 
 # change this entrypoint if it is not the same as the repo
 ENTRYPOINT ["rtems-proxy"]
