@@ -1,7 +1,5 @@
 Dockerfile
-.dockerignore
 .gitignore
-.git
 .tox
 cov.xml
 .ruff_cache
