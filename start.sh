@@ -1,23 +1,34 @@
 #!/bin/bash
 
+set -xe
+
+# This is the folder the PVC for the nfsv2tftp shared volume is mounted into.
+# It will be served as /iocs/${IOC_NAME}/files
+# over nfsv2 and tftp
+#
+# Each RTEMS IOC will mount its sub-folder as /epics - meaning that the file
+# paths are identical to native x86 EPICS IOCs
 export PVC_ROOT=/nfsv2tftp
 
-# make a directory structure that matches what the RTEMS crate will mount
-# but is really our PVC shared with the nfsv2tftp service
-IOC_FOLDER=/iocs/${IOC_NAME}
-mkdir /iocs/
-ln -s ${PVC_ROOT} ${IOC_FOLDER}
+# start.sh requires these environment variables to be set
+export EPICS_ROOT=/epics
+export SUPPORT=${EPICS_ROOT}/support
+export IOC=${EPICS_ROOT}/ioc
 
-# point ibek at the root IOC folder - all assets will go in the same folder
-export IOC=${IOC_FOLDER}
-export RUNTIME_DIR=${IOC_FOLDER}
-# generate the startup script and subst file
-ibek runtime generate /epics/ioc/config/ioc.yaml /epics/ibek-defs/*.support.ibek.yaml
-# expand the subst file into a database
-includes=$(for i in /epics/support/*/db; do echo -n "-I $i "; done)
-msi ${includes} -I${RUNTIME_DIR} -S ${RUNTIME_DIR}/ioc.subst -o ${RUNTIME_DIR}/ioc.db
+if [ ! -d ${PVC_ROOT} ]; then
+    echo "ERROR: No PVC folder found."
+    # make a folder for testing outside of the cluster
+    mkdir -p ${PVC_ROOT}
+fi
 
-cp -r /epics/ioc/dbd ${IOC_FOLDER}
+# generate the runtime assets
+/epics/ioc/start.sh
+
+# copy the runtime assets into the shared volume
+cp -r /epics/ioc ${PVC_ROOT}
+cp -r /epics/runtime ${PVC_ROOT}
+# make the boot file path shorter
+ln -s ${PVC_ROOT}/epics/ioc/bin/*/ioc.boot ${PVC_ROOT}
 
 # keep the container running ...
 while true; do
