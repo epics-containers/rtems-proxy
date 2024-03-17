@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -x
 
 # This is the folder the PVC for the nfsv2tftp shared volume is mounted into.
 export RTEMS_ROOT=${RTEMS_ROOT:-/nfsv2-tftp}
@@ -12,7 +12,7 @@ if [ ! -d ${RTEMS_ROOT} ]; then
 fi
 
 # copy the IOC instance's runtime assets into the shared volume
-cp -r /epics/ioc ${RTEMS_ROOT}
+cp -rL /epics/ioc ${RTEMS_ROOT}
 cp -r /epics/runtime ${RTEMS_ROOT}
 # move binaries to the root for shorter paths
 mv ${RTEMS_ROOT}/ioc/bin/*/* ${RTEMS_ROOT}
