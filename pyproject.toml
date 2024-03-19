@@ -23,9 +23,9 @@ requires-python = ">=3.7"
 [project.optional-dependencies]
 dev = [
     "copier",
+    "mypy",
     "pipdeptree",
     "pre-commit",
-    "pyright",
     "pytest",
     "pytest-cov",
     "ruff",
@@ -47,8 +47,8 @@ name = "Giles Knap"
 [tool.setuptools_scm]
 write_to = "src/rtems_proxy/_version.py"
 
-[tool.pyright]
-reportMissingImports = false # Ignore missing stubs in imported modules
+[tool.mypy]
+ignore_missing_imports = true # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
@@ -81,10 +81,10 @@ passenv = *
 allowlist_externals =
     pytest
     pre-commit
-    pyright
+    mypy
 commands =
     pre-commit: pre-commit run --all-files {posargs}
-    type-checking: pyright src tests {posargs}
+    type-checking: mypy src tests {posargs}
     tests: pytest --cov=rtems_proxy --cov-report term --cov-report xml:cov.xml {posargs}
 """
 

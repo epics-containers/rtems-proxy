@@ -1,5 +1,6 @@
 ARG PYTHON_VERSION=3.12
 
+<<<<<<< before updating
 ##### developer stage ##########################################################
 FROM python:${PYTHON_VERSION} as developer
 
@@ -40,3 +41,8 @@ COPY proxy-start.sh /proxy-start.sh
 
 ENTRYPOINT ["rtems-proxy"]
 CMD ["--version"]
+=======
+# Set up a virtual environment and put it in PATH
+RUN python -m venv /venv
+ENV PATH=/venv/bin:$PATH
+>>>>>>> after updating

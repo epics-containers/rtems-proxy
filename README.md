@@ -13,7 +13,6 @@ how it does it, and why people should use it.
 Source          | <https://github.com/epics-containers/rtems-proxy>
 :---:           | :---:
 PyPI            | `pip install rtems-proxy`
-Docker          | `docker run ghcr.io/epics-containers/rtems-proxy:latest`
 Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 
 This is where you should put some images or code snippets that illustrate
