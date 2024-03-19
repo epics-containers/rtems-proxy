@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = [] # Add project dependencies here, e.g. ["click", "numpy"]
+dependencies = ["telnetlib3"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"

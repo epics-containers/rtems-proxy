@@ -14,8 +14,10 @@ fi
 # copy the IOC instance's runtime assets into the shared volume
 cp -rL /epics/ioc ${RTEMS_ROOT}
 cp -r /epics/runtime ${RTEMS_ROOT}
-# move binaries to the root for shorter paths
-mv ${RTEMS_ROOT}/ioc/bin/*/* ${RTEMS_ROOT}
+# move binary to the root for shorter paths
+mv ${RTEMS_ROOT}/ioc/bin/*/ioc.boot ${RTEMS_ROOT}
+# fix up the paths in st.cmd
+sed -i "s|/epics/|/iocs/${IOC_LOCATION}/${IOC_NAME}/|" ${RTEMS_ROOT}/runtime/st.cmd
 
 # keep the container running ...
 while true; do
