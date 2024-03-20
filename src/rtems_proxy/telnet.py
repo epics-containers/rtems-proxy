@@ -2,13 +2,7 @@ import asyncio
 import signal
 from time import sleep
 
-import click
 import telnetlib3
-
-
-@click.group()
-def cli():
-    pass
 
 
 class TelnetRTEMS:
@@ -32,6 +26,10 @@ class TelnetRTEMS:
         while self.running:
             # run the wait for input in a separate thread
             cmd = await loop.run_in_executor(None, input)
+            # look for control + ] to terminate the session
+            if b"\x1d" in cmd.encode():
+                self.running = False
+                break
             writer.write(cmd)
             writer.write("\r")
         writer.close()
@@ -99,16 +97,7 @@ class TelnetRTEMS:
                 sleep(3)
 
 
-@cli.command()
-@click.argument("hostname", type=str)
-@click.argument("port", type=int)
-@click.option("--reboot", type=bool, default=False)
-@click.option("--pause", type=bool, default=False)
-def connect(hostname: str, port: int, reboot: bool, pause: bool):
+def connect(host_and_port: str, reboot: bool = False, pause: bool = False):
+    hostname, port = host_and_port.split(":")
     telnet = TelnetRTEMS(hostname, port, reboot, pause)
     asyncio.run(telnet.connect())
-
-
-cli.add_command(connect)
-if __name__ == "__main__":
-    cli()

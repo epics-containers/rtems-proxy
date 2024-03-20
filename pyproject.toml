@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = ["telnetlib3"]
+dependencies = ["typer", "telnetlib3"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"
@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-rtems-proxy = "rtems_proxy.__main__:main"
+rtems-proxy = "rtems_proxy.__main__:cli"
 
 [project.urls]
 GitHub = "https://github.com/epics-containers/rtems-proxy"
