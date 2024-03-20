@@ -56,7 +56,7 @@ class _Globals:
         self.RTEMS_TFTP_IP = os.getenv("RTEMS_TFTP_IP")
         """ address of a TFTP server that the RTEMS IOC can access """
 
-        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
+        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE", "NO_CONSOLE")
         """ address:port to connect to the IOC console """
 
         self.IOC_NAME = os.getenv("IOC_NAME")

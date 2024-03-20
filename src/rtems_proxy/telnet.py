@@ -99,5 +99,5 @@ class TelnetRTEMS:
 
 def connect(host_and_port: str, reboot: bool = False, pause: bool = False):
     hostname, port = host_and_port.split(":")
-    telnet = TelnetRTEMS(hostname, port, reboot, pause)
+    telnet = TelnetRTEMS(hostname, int(port), reboot, pause)
     asyncio.run(telnet.connect())
