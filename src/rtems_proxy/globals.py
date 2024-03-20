@@ -20,20 +20,14 @@ class _Globals:
 
         self.RUNTIME = self.EPICS_ROOT / "runtime"
 
-        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH")
+        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH", DEFAULT_ARCH)
         """ Host architecture """
 
-        self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH")
+        self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", DEFAULT_ARCH)
         """ Cross compilation target architecture """
 
-        self.IOC = os.getenv("IOC")
+        self.IOC = Path(os.getenv("IOC", self.EPICS_ROOT / "ioc"))
         """ The root folder for IOC source and binaries """
-
-        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH")
-        """ Host architecture """
-
-        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH")
-        """ Host architecture """
 
         # TODO in future, shall we drop the RTEMS prefix and make this module
         # generic?
@@ -59,10 +53,10 @@ class _Globals:
         self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE", "NO_CONSOLE")
         """ address:port to connect to the IOC console """
 
-        self.IOC_NAME = os.getenv("IOC_NAME")
+        self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
         """ the name of this IOC """
 
-        self.IOC_GROUP = os.getenv("IOC_GROUP")
+        self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
         """ the name of the repository that this IOC is grouped into """
 
 
