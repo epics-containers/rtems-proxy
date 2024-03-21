@@ -1,5 +1,8 @@
 import asyncio
 import signal
+import sys
+import termios
+import tty
 from time import sleep
 
 import telnetlib3
@@ -21,18 +24,29 @@ class TelnetRTEMS:
         self.terminated = True
 
     async def user_input(self, writer):
-        loop = asyncio.events._get_running_loop()
+        def get_char():
+            ch = sys.stdin.read(1)
+            return ch
 
-        while self.running:
-            # run the wait for input in a separate thread
-            cmd = await loop.run_in_executor(None, input)
-            # look for control + ] to terminate the session
-            if b"\x1d" in cmd.encode():
-                self.running = False
-                break
-            writer.write(cmd)
-            writer.write("\r")
-        writer.close()
+        stdin_fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(stdin_fd)
+
+        try:
+            tty.setraw(sys.stdin.fileno())
+            loop = asyncio.events._get_running_loop()
+
+            while self.running:
+                # run the wait for input in a separate thread
+                next_ch = await loop.run_in_executor(None, get_char)
+                # look for control + ] to terminate the session
+                if b"\x1d" in next_ch.encode():
+                    self.running = False
+                    break
+                writer.write(next_ch)
+
+        finally:
+            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
+            writer.close()
 
     async def server_output(self, reader):
         while self.running:
