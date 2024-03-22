@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = ["typer", "jinja2", "ruamel.yaml", "telnetlib3"]
+dependencies = ["jinja2", "pexpect", "ruamel.yaml", "telnetlib3", "typer"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"

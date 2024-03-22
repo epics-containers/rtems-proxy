@@ -5,7 +5,6 @@ functions for moving IOC assets into position for a remote IOC to access
 import re
 import shutil
 from pathlib import Path
-from time import sleep
 
 from .globals import GLOBALS
 
@@ -33,7 +32,7 @@ def copy_rtems():
     bin_rtems_dest = ioc_dest / binary
     bin_rtems_dest.parent.mkdir(parents=True, exist_ok=True)
 
-    shutil.copytree(dbd_src , dbd_dest, symlinks=True, dirs_exist_ok=True)
+    shutil.copytree(dbd_src, dbd_dest, symlinks=True, dirs_exist_ok=True)
     shutil.copy(bin_rtems_src, bin_rtems_dest)
     shutil.copytree(GLOBALS.RUNTIME, dest_runtime, dirs_exist_ok=True)
 

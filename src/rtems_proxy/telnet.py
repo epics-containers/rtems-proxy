@@ -1,119 +1,114 @@
-import asyncio
 import signal
 import sys
-import termios
-import tty
+from enum import Enum
 from time import sleep
 
-import telnetlib3
+import pexpect
+
+from .utils import run_command
+
+
+class CurrentPrompt(Enum):
+    MOT = 0
+    IOC = 2
+    UNKNOWN = 3
 
 
 class TelnetRTEMS:
-    def __init__(self, hostname: str, port: int, reboot: bool, pause: bool):
-        self.hostname = hostname
-        self.port = port
+    MOT_PROMPT = "MVME5500> "
+    CONTINUE = "<SPC> to Continue"
+    REBOOTING = "(most recent call last):"
+    REBOOTED = "TCP Statistics"
+    IOC_STARTED = "iocRun: All initialization complete"
+    DBPF = "help dbpf"
+    DBPF_RESPONSE = "of record field."
+    NO_CONNECTION = "Connection closed by foreign host"
+
+    def __init__(self, host_and_port: str, reboot: bool, pause: bool):
+        self.hostname, self.port = host_and_port.split(":")
         self.reboot = reboot
         self.pause = pause
         self.running = True
         self.terminated = False
+        self.command = f"telnet {self.hostname} {self.port}"
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
 
-    def terminate(self, *args):
-        self.running = False
-        self.terminated = True
+    def terminate(self, signum, frame):
+        print(">> Terminating <<")
+        exit(0)
 
-    async def user_input(self, writer):
-        def get_char():
-            ch = sys.stdin.read(1)
-            return ch
-
-        stdin_fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(stdin_fd)
-
-        try:
-            tty.setraw(sys.stdin.fileno())
-            loop = asyncio.events._get_running_loop()
-
-            while self.running:
-                # run the wait for input in a separate thread
-                next_ch = await loop.run_in_executor(None, get_char)
-                # look for control + ] to terminate the session
-                if b"\x1d" in next_ch.encode():
-                    self.running = False
-                    break
-                writer.write(next_ch)
-
-        finally:
-            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
-            writer.close()
-
-    async def server_output(self, reader):
-        try:
-            while self.running:
-                out_p = await reader.read(1024)
-                if not out_p:
-                    self.running = False
-                print(out_p, flush=True, end="")
-        finally:
-            reader.close()
-
-    async def shell(self, reader, writer):
-        # user input and server output in separate tasks
-        tasks = [
-            self.server_output(reader),
-            self.user_input(writer),
-        ]
-
-        await asyncio.gather(*tasks)
-
-    async def send_command(self, cmd):
-        reader, writer = await telnetlib3.open_connection(self.hostname, self.port)
-
-        writer.write("\r")
-        await asyncio.sleep(0.1)
-        prompt = await reader.read(1024)
-        print(f"prompt is {prompt.strip()}")
-
-        print(f"Sending command: {cmd}")
-        writer.write(f"{cmd}\r")
-        await asyncio.sleep(0.1)
-        result = await reader.read(1024)
-        print(f"Result is: {result.strip()}")
-
-        reader.close()
-        writer.close()
-
-    async def connect(self):
-        while True:  # retry loop
+    def check_prompt(self, child, retries=30) -> CurrentPrompt:
+        while retries > 0:
             try:
-                if self.reboot:
-                    print("REBOOTING IOC ...")
-                    await self.send_command("exit")
-                    self.reboot = False  # only reboot once
-                elif self.pause:
-                    print("Un-stopping IOC")
-                    await self.send_command("iocRun")
+                child.sendline()
+                child.expect(self.MOT_PROMPT, timeout=1)
+            except pexpect.exceptions.TIMEOUT:
+                child.sendline(self.DBPF)
+                try:
+                    child.expect(self.DBPF_RESPONSE, timeout=1)
+                except pexpect.exceptions.TIMEOUT:
+                    sleep(2)
+                else:
+                    print("\n>> Currently in IOC shell <<\n")
+                    return CurrentPrompt.IOC
+            else:
+                print("\n>>> Currently in bootloader <<\n")
+                return CurrentPrompt.MOT
+            print(">> Retrying get current status ... <<")
+            retries -= 1
 
-                # start interactive session
-                reader, writer = await telnetlib3.open_connection(
-                    self.hostname, self.port, shell=self.shell
-                )
-                await writer.protocol.waiter_closed
+        print("\n>> Current state UNKNOWN <<\n")
+        raise RuntimeError("Current state of remote IOC unknown")
 
-                if self.terminated and self.pause:
-                    print("Stopping IOC")
-                    await self.send_command("iocPause")
+    def get_epics_prompt(self, child):
+        current = self.check_prompt(child)
+        if current != CurrentPrompt.IOC:
+            sleep(0.2)
+            child.send("reset\n")
+            child.expect(self.CONTINUE, timeout=10)
 
-                break  # interactive session done so exit retry loop
+            child.send(" ")
+            child.expect(self.IOC_STARTED, timeout=50)
 
-            except ConnectionResetError:
-                # probably the previous pod is terminating and is still connected
-                print("Waiting for Telnet Port (connection reset), RETRYING ...")
-                sleep(3)
+        print(">> press enter for IOC shell prompt <<")
+
+    def get_boot_prompt(self, child):
+        current = self.check_prompt(child)
+        if current != CurrentPrompt.MOT:
+            # get out of the IOC and return to MOT
+            child.sendline("exit")
+            try:
+                child.expect(self.REBOOTING, timeout=1)
+            except UnicodeDecodeError:
+                pass  # there are illegal chars during the reboot process
+            child.expect(self.CONTINUE, timeout=10)
+
+            child.send(chr(27))
+            child.expect(self.MOT_PROMPT, timeout=20)
+
+        print(">> press enter for bootloader prompt <<")
 
 
 def connect(host_and_port: str, reboot: bool = False, pause: bool = False):
-    hostname, port = host_and_port.split(":")
-    telnet = TelnetRTEMS(hostname, int(port), reboot, pause)
-    asyncio.run(telnet.connect())
+    telnet = TelnetRTEMS(host_and_port, reboot, pause)
+
+    child = pexpect.spawn(
+        telnet.command, encoding="utf-8", logfile=sys.stdout, echo=False
+    )
+    try:
+        child.expect(telnet.NO_CONNECTION, timeout=1)
+    except pexpect.exceptions.TIMEOUT:
+        pass
+    else:
+        print(">> Cannot connect to remote IOC, connection in use? <<")
+        child.close()
+        return
+
+    telnet.get_epics_prompt(child)
+
+    # telnet.get_boot_prompt(child)
+
+    child.close()
+
+    run_command(telnet.command)
