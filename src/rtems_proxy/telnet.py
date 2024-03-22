@@ -49,12 +49,14 @@ class TelnetRTEMS:
             writer.close()
 
     async def server_output(self, reader):
-        while self.running:
-            out_p = await reader.read(1024)
-            if not out_p:
-                raise EOFError("Connection closed by server")
-            print(out_p, flush=True, end="")
-        reader.close()
+        try:
+            while self.running:
+                out_p = await reader.read(1024)
+                if not out_p:
+                    self.running = False
+                print(out_p, flush=True, end="")
+        finally:
+            reader.close()
 
     async def shell(self, reader, writer):
         # user input and server output in separate tasks

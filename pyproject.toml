@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = ["typer", "telnetlib3"]
+dependencies = ["typer", "jinja2", "ruamel.yaml", "telnetlib3"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"
@@ -89,6 +89,11 @@ commands =
 """
 
 [tool.ruff]
+ignore = [
+    "B008", # Do not perform unnecessary work in __all__
+    "C408", # Unnecessary collection call - e.g. list(...) instead of [...]
+    "E501", # Line too long, should be fixed by black.
+]
 src = ["src", "tests"]
 line-length = 88
 lint.select = [

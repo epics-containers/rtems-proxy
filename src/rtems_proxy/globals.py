@@ -32,7 +32,7 @@ class _Globals:
         # TODO in future, shall we drop the RTEMS prefix and make this module
         # generic?
 
-        self.RTEMS_ROOT = Path(os.getenv("RTEMS_ROOT", "/nfsv2-tftp"))
+        self.RTEMS_TFTP_PATH = Path(os.getenv("RTEMS_TFTP_PATH", "/nfsv2-tftp"))
         """ root folder of a mounted PVC in which to place IOC binaries """
 
         self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
