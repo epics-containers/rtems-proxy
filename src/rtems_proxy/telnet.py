@@ -92,6 +92,8 @@ class TelnetRTEMS:
         bootloader. Because there is a possibility that we are in the middle
         of a reboot, we will retry for one before giving up.
         """
+        assert self._child, "must call connect before check_prompt"
+
         while retries > 0:
             try:
                 # see if we are in the IOC shell
@@ -123,6 +125,8 @@ class TelnetRTEMS:
         Reboot the board from IOC shell or bootloader and choose appropriate
         options to get to the state requested by the into argument.
         """
+        assert self._child, "must call connect before reboot"
+
         self.report(f"Rebooting into {into.name}")
         current_state = self.check_prompt()
         if current_state == RtemsState.MOT:
@@ -144,6 +148,8 @@ class TelnetRTEMS:
         it into the IOC shell. If the IOC is running, do a reboot only if
         requested (in order to pick up new binaries/startup/epics db)
         """
+        assert self._child, "must call connect before get_epics_prompt"
+
         current = self.check_prompt()
         if current != RtemsState.IOC:
             sleep(0.2)
@@ -163,6 +169,8 @@ class TelnetRTEMS:
         Get to the bootloader prompt, if the IOC shell is running then exit
         and send appropriate commands to get to the bootloader
         """
+        assert self._child, "must call connect before get_boot_prompt"
+
         current = self.check_prompt()
         if current != RtemsState.MOT:
             # get out of the IOC and return to MOT
@@ -192,7 +200,6 @@ def ioc_connect(host_and_port: str, reboot: bool = False):
     telnet = TelnetRTEMS(host_and_port, reboot)
 
     try:
-        telnet.connect()
         telnet.get_epics_prompt()
     except (CannotConnect, pexpect.exceptions.TIMEOUT):
         print("\n\nNot Connected. Exiting...")

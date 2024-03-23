@@ -36,8 +36,6 @@ def run_command(
 
     if p_result.returncode != 0 and not error_OK:
         typer.echo("\nCommand Failed:")
-        if not globals.EC_VERBOSE:
-            typer.echo(command)
         typer.echo(output)
         typer.echo(error_out)
         raise typer.Exit(1)
