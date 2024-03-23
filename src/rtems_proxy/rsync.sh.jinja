@@ -10,6 +10,7 @@ export IOC_PATH={{ ioc_path }}
 pkill -f rsync-background &>/dev/null
 
 ibek dev instance $IOC_PATH
+bash /epics/ioc/install.sh
 
 mkdir -p $RTEMS_TFTP_PATH
 cd $RTEMS_TFTP_PATH
