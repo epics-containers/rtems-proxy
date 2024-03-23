@@ -9,7 +9,7 @@ from ruamel.yaml import YAML
 from . import __version__
 from .copy import copy_rtems
 from .globals import GLOBALS
-from .telnet import connect
+from .telnet import ioc_connect
 
 __all__ = ["main"]
 
@@ -66,17 +66,7 @@ def start(
     )
     if copy:
         copy_rtems()
-    connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot)
-
-    while True:
-        print(f"\n\nIOC {GLOBALS.IOC_NAME} disconnected. Reconnect or exit? [r/e]")
-        choice = ""
-        while choice not in ["r", "e"]:
-            choice = input()
-        if choice == "e":
-            break
-        connect(GLOBALS.RTEMS_CONSOLE)
-        sleep(10)
+    ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot)
 
 
 @cli.command()
