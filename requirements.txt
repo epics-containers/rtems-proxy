@@ -1,0 +1,3 @@
+# these requirements are for additional python packages to install into the
+# container
+ibek==1.7.2b6

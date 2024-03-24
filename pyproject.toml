@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = [] # Add project dependencies here, e.g. ["click", "numpy"]
+dependencies = ["jinja2", "pexpect", "ruamel.yaml", "telnetlib3", "typer"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"
@@ -23,9 +23,9 @@ requires-python = ">=3.7"
 [project.optional-dependencies]
 dev = [
     "copier",
+    "mypy",
     "pipdeptree",
     "pre-commit",
-    "pyright",
     "pytest",
     "pytest-cov",
     "ruff",
@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-rtems-proxy = "rtems_proxy.__main__:main"
+rtems-proxy = "rtems_proxy.__main__:cli"
 
 [project.urls]
 GitHub = "https://github.com/epics-containers/rtems-proxy"
@@ -47,8 +47,8 @@ name = "Giles Knap"
 [tool.setuptools_scm]
 write_to = "src/rtems_proxy/_version.py"
 
-[tool.pyright]
-reportMissingImports = false # Ignore missing stubs in imported modules
+[tool.mypy]
+ignore_missing_imports = true # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
@@ -81,14 +81,19 @@ passenv = *
 allowlist_externals =
     pytest
     pre-commit
-    pyright
+    mypy
 commands =
     pre-commit: pre-commit run --all-files {posargs}
-    type-checking: pyright src tests {posargs}
+    type-checking: mypy src tests {posargs}
     tests: pytest --cov=rtems_proxy --cov-report term --cov-report xml:cov.xml {posargs}
 """
 
 [tool.ruff]
+ignore = [
+    "B008", # Do not perform unnecessary work in __all__
+    "C408", # Unnecessary collection call - e.g. list(...) instead of [...]
+    "E501", # Line too long, should be fixed by black.
+]
 src = ["src", "tests"]
 line-length = 88
 lint.select = [
