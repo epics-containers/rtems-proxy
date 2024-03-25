@@ -1,0 +1,31 @@
+#!/bin/bash
+
+{% for name,value in env_vars.items() -%}
+export {{ name }}={{ value }}
+{% endfor -%}
+export IOC_GROUP={{ ioc_group }}
+export IOC_NAME={{ ioc_name }}
+export IOC_PATH={{ ioc_path }}
+
+pkill -f rsync-background &>/dev/null
+
+ibek dev instance $IOC_PATH
+bash /epics/ioc/install.sh
+
+mkdir -p $RTEMS_TFTP_PATH
+
+# get previous contents
+rsync -rt "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_GROUP/$IOC_NAME/" $RTEMS_TFTP_PATH 2>/dev/null
+
+echo "
+#!/bin/bash
+
+while true; do
+  inotifywait -e modify,create,delete,move -r $RTEMS_TFTP_PATH
+  rsync -rt --delete /$RTEMS_TFTP_PATH/ \
+        "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_GROUP/$IOC_NAME/" &> /tmp/rsync.log
+done
+" > /tmp/rsync-background.sh
+
+nohup bash /tmp/rsync-background.sh &> /tmp/rsync-background.log &
+

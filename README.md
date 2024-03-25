@@ -13,7 +13,6 @@ how it does it, and why people should use it.
 Source          | <https://github.com/epics-containers/rtems-proxy>
 :---:           | :---:
 PyPI            | `pip install rtems-proxy`
-Docker          | `docker run ghcr.io/epics-containers/rtems-proxy:latest`
 Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 
 This is where you should put some images or code snippets that illustrate
@@ -28,6 +27,8 @@ print(f"Hello rtems_proxy {__version__}")
 
 Or if it is a commandline tool then you might put some example commands here:
 
+
 ```
 python -m rtems_proxy --version
 ```
+
