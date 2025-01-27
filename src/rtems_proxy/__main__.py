@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import typer
 from jinja2 import Template
@@ -23,7 +22,7 @@ def version_callback(value: bool):
 
 @cli.callback()
 def main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         callback=version_callback,

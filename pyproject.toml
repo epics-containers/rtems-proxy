@@ -87,7 +87,7 @@ commands =
 """
 
 [tool.ruff]
-ignore = [
+lint.ignore = [
     "B008", # Do not perform unnecessary work in __all__
     "C408", # Unnecessary collection call - e.g. list(...) instead of [...]
     "E501", # Line too long, should be fixed by black.

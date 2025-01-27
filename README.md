@@ -31,4 +31,3 @@ Or if it is a commandline tool then you might put some example commands here:
 ```
 python -m rtems_proxy --version
 ```
-
