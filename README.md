@@ -1,7 +1,7 @@
 [![CI](https://github.com/epics-containers/rtems-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/epics-containers/rtems-proxy/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/epics-containers/rtems-proxy/branch/main/graph/badge.svg)](https://codecov.io/gh/epics-containers/rtems-proxy)
 [![PyPI](https://img.shields.io/pypi/v/rtems-proxy.svg)](https://pypi.org/project/rtems-proxy)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 # rtems_proxy
 
