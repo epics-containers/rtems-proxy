@@ -22,6 +22,15 @@ def copy_rtems():
     # where to copy the generated runtime assets to (st.cmd and ioc.db)
     dest_runtime = root / "runtime"
 
+    # TODO - perhaps do this for linux IOCs too - in which case this needs
+    # to go somewhere generic
+    protocol_folder = GLOBALS.RUNTIME / "protocol"
+    protocol_folder.mkdir(parents=True, exist_ok=True)
+    protocol_files = GLOBALS.SUPPORT.glob("**/*.proto*")
+    for proto_file in protocol_files:
+        dest = protocol_folder / proto_file.name
+        shutil.copy(proto_file, dest)
+
     # move all the files needed for runtime into the PVC that is being shared
     # over nfs/tftp by the nfsv2-tftp service
     ioc_src = GLOBALS.IOC.readlink()
@@ -35,12 +44,6 @@ def copy_rtems():
     shutil.copytree(dbd_src, dbd_dest, symlinks=True, dirs_exist_ok=True)
     shutil.copy(bin_rtems_src, bin_rtems_dest)
     shutil.copytree(GLOBALS.RUNTIME, dest_runtime, dirs_exist_ok=True)
-
-    protocol_folder = RTEMS_TFTP_PATH / "protocol"
-    protocol_files = GLOBALS.SUPPORT.glob("**/*.proto*")
-    for proto_file in protocol_files:
-        dest = protocol_folder / proto_file.name
-        shutil.copy(proto_file, dest)
 
     # because we moved the ioc files we need to fix up startup script paths
     startup = dest_runtime / "st.cmd"

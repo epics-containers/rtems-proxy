@@ -91,7 +91,7 @@ def dev(
 
     ioc_path = ioc_repo / "services" / ioc_name
 
-    values = ioc_repo / "helm/shared/values.yaml"
+    values = ioc_repo / "services" / "values.yaml"
     if not values.exists():
         typer.echo(f"Global settings file {values} not found. Exiting")
         raise typer.Exit(1)
@@ -106,20 +106,25 @@ def dev(
     with open(values) as fp:
         yaml = YAML(typ="safe").load(fp)
     try:
-        ioc_group = yaml["ioc-instance"]["ioc_group"]
+        ioc_group = yaml["global"]["ioc_group"]
+    except KeyError:
+        typer.echo(f"{values} global.ioc_group key missing")
+        raise typer.Exit(1) from None
+    try:
+        ioc_group = yaml["global"]["ioc_group"]
         for item in yaml["ioc-instance"]["globalEnv"]:
             env_vars[item["name"]] = item["value"]
     except KeyError:
-        typer.echo(f"{values} not in expected format")
+        typer.echo(f"{values} globalEnv key missing")
         raise typer.Exit(1) from None
 
     with open(ioc_values) as fp:
         yaml = YAML(typ="safe").load(fp)
     try:
-        for item in yaml["shared"]["ioc-instance"]["iocEnv"]:
+        for item in yaml["ioc-instance"]["iocEnv"]:
             env_vars[item["name"]] = item["value"]
     except KeyError:
-        typer.echo(f"{ioc_values} not in expected format")
+        typer.echo(f"{ioc_values} iocEnv key missing")
         raise typer.Exit(1) from None
 
     this_dir = Path(__file__).parent

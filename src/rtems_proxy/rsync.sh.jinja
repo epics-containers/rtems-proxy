@@ -7,6 +7,23 @@ export IOC_GROUP={{ ioc_group }}
 export IOC_NAME={{ ioc_name }}
 export IOC_PATH={{ ioc_path }}
 
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+  echo "This script must be sourced"
+  exit 1
+fi
+
+# validate we have the essential environment variables
+if [[ -z "$RTEMS_TFTP_PATH" || -z "$RTEMS_TFTP_IP"  || -z "$IOC_NAME" || -z "$RTEMS_TFTP_IP" ]]; then
+  echo "RTEMS_TFTP_PATH,RTEMS_TFTP_IP,IOC_NAME must all be set"
+  return 1
+fi
+
+if [[ $RTEMS_TFTP_PATH != "/"* ]]; then
+  echo "RTEMS_TFTP_PATH must be an absolute path"
+  return 1
+fi
+
+# remove previoud rsync-background process if it exists
 pkill -f rsync-background &>/dev/null
 
 ibek dev instance $IOC_PATH
@@ -15,7 +32,11 @@ bash /epics/ioc/install.sh
 mkdir -p $RTEMS_TFTP_PATH
 
 # get previous contents
-rsync -rt "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_GROUP/$IOC_NAME/" $RTEMS_TFTP_PATH 2>/dev/null
+echo "getting existing contents of the IOC nfs2-tftp folder"
+(
+  set -x
+  rsync -rt "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_NAME/" $RTEMS_TFTP_PATH 2>/dev/null
+)
 
 echo "
 #!/bin/bash
@@ -23,8 +44,10 @@ echo "
 while true; do
   inotifywait -e modify,create,delete,move -r $RTEMS_TFTP_PATH
   rsync -rt --delete /$RTEMS_TFTP_PATH/ \
-        "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_GROUP/$IOC_NAME/" &> /tmp/rsync.log
+        "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_NAME/"
 done
 " > /tmp/rsync-background.sh
+chmod +x /tmp/rsync-background.sh
 
-nohup bash /tmp/rsync-background.sh &> /tmp/rsync-background.log &
+echo "launching rsync-background.sh"
+nohup /tmp/rsync-background.sh &> /tmp/rsync-background.log &
