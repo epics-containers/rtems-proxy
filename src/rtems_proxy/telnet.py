@@ -201,7 +201,8 @@ def ioc_connect(host_and_port: str, reboot: bool = False):
 
     try:
         telnet.connect()
-        telnet.get_epics_prompt()
+        if reboot:
+            telnet.get_epics_prompt()
     except (CannotConnect, pexpect.exceptions.TIMEOUT):
         print("\n\nNot Connected. Exiting...")
         telnet.close()
