@@ -48,18 +48,12 @@ class TelnetRTEMS:
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
 
-    def report(self, message):
-        """
-        print a message that is noticeable amongst all the other output
-        """
-        print(f"\n>>>> {message} <<<<\n")
-
     def terminate(self, signum, frame):
         """
         Allow the user to terminate the connection with ctrl-c while the
         pexpect child is running (but not once interactive telnet is started)
         """
-        self.report("Terminating")
+        report("Terminating")
         exit(0)
 
     def connect(self):
@@ -83,7 +77,7 @@ class TelnetRTEMS:
             # if we timeout looking for failed connection that is good
             pass
         else:
-            print(">> Cannot connect to remote IOC, connection in use? <<")
+            report("Cannot connect to remote IOC, connection in use?")
             raise CannotConnect
 
     def check_prompt(self, retries=5) -> RtemsState:
@@ -108,16 +102,16 @@ class TelnetRTEMS:
                     # current state unknown. wait and retry
                     sleep(15)
                 else:
-                    self.report("Currently in bootloader")
+                    report("Currently in bootloader")
                     return RtemsState.MOT
             else:
-                self.report("Currently in IOC shell")
+                report("Currently in IOC shell")
                 return RtemsState.IOC
 
-            self.report("Retrying get current status")
+            report("Retrying get current status")
             retries -= 1
 
-        self.report("Current state UNKNOWN")
+        report("Current state UNKNOWN")
         raise CannotConnect("Current state of remote IOC unknown")
 
     def reboot(self, into: RtemsState):
@@ -127,7 +121,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before reboot"
 
-        self.report(f"Rebooting into {into.name}")
+        report(f"Rebooting into {into.name}")
         current_state = self.check_prompt()
         if current_state == RtemsState.MOT:
             self._child.sendline("reset")
@@ -162,7 +156,7 @@ class TelnetRTEMS:
                 self.reboot(RtemsState.IOC)
                 self._child.expect(self.IOC_STARTED, timeout=50)
 
-        self.report("press enter for IOC shell prompt")
+        report("press enter for IOC shell prompt")
 
     def get_boot_prompt(self):
         """
@@ -177,7 +171,7 @@ class TelnetRTEMS:
             self.reboot(RtemsState.MOT)
             self._child.expect(self.MOT_PROMPT, timeout=20)
 
-        self.report("press enter for bootloader prompt")
+        report("press enter for bootloader prompt")
 
     def close(self):
         if self._child:
@@ -186,6 +180,13 @@ class TelnetRTEMS:
 
     def __del__(self):
         self.close()
+
+
+def report(message):
+    """
+    print a message that is noticeable amongst all the other output
+    """
+    print(f"\n>>>> {message} <<<<\n")
 
 
 def ioc_connect(host_and_port: str, reboot: bool = False):
@@ -203,9 +204,12 @@ def ioc_connect(host_and_port: str, reboot: bool = False):
         telnet.connect()
         if reboot:
             telnet.get_epics_prompt()
+        else:
+            TelnetRTEMS.report("Auto reboot disabled. Skipping reboot")
     except (CannotConnect, pexpect.exceptions.TIMEOUT):
-        print("\n\nNot Connected. Exiting...")
+        TelnetRTEMS.report("Connection failed. Exiting")
         telnet.close()
     else:
         telnet.close()
+        TelnetRTEMS.report("Connecting to IOC console, hit enter for a prompt")
         run_command(telnet.command)

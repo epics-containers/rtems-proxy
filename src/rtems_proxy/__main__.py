@@ -7,7 +7,7 @@ from ruamel.yaml import YAML
 from . import __version__
 from .copy import copy_rtems
 from .globals import GLOBALS
-from .telnet import ioc_connect
+from .telnet import ioc_connect, report
 
 __all__ = ["main"]
 
@@ -40,6 +40,9 @@ def start(
     copy: bool = typer.Option(
         True, "--copy/--no-copy", help="copy binaries before connecting"
     ),
+    connect: bool = typer.Option(
+        True, "--connect/--no-connect", help="connect to the IOC console"
+    ),
     reboot: bool = typer.Option(
         True, "--reboot/--no-reboot", help="reboot the IOC first"
     ),
@@ -55,16 +58,21 @@ def start(
     it detects that EPICS_HOST_ARCH==RTEMS-beatnik
 
     args:
-    copy: Copy the RTEMS binaries to the IOCs TFTP and NFS directories first
-    reboot: Reboot the IOC once the binaries are copied and the connection is made
+    copy:    Copy the RTEMS binaries to the IOCs TFTP and NFS directories first
+    connect: Connect to the IOC console after rebooting
+    reboot:  Reboot the IOC once the binaries are copied and the connection is
+             made. Ignored if connect is False.
     """
-    print(
+    report(
         f"Remote control startup of RTEMS IOC {GLOBALS.IOC_NAME}"
         f" at {GLOBALS.RTEMS_IOC_IP}"
     )
     if copy:
         copy_rtems()
-    ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot)
+    if connect:
+        ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot)
+    else:
+        report("IOC console connection disabled. ")
 
 
 @cli.command()
