@@ -43,10 +43,10 @@ def copy_rtems():
 
     # copy all the files needed for runtime into the PVC that is being shared
     # over nfs/tftp by the nfsv2-tftp service
-    shutil.rmtree(dest_ioc, ignore_errors=True)
-    shutil.rmtree(dest_runtime, ignore_errors=True)
     for folder in ["bin", "dbd"]:
-        shutil.copytree(GLOBALS.IOC.readlink() / folder, dest_ioc / folder)
+        shutil.copytree(
+            GLOBALS.IOC.readlink() / folder, dest_ioc / folder, dirs_exist_ok=True
+        )
     shutil.copytree(GLOBALS.RUNTIME, dest_runtime, dirs_exist_ok=True)
 
     # because we moved the ioc files we need to fix up startup script paths
@@ -56,6 +56,6 @@ def copy_rtems():
     # also fix up the protocol path to point to protocol_folder
     cmd_txt = (
         cmd_txt
-        + f'\nepicsEnvSet("STREAM_PROTOCOL_PATH", "{str(dest_runtime / "protocol")}")\n'
+        + f'\nepicsEnvSet("STREAM_PROTOCOL_PATH", "{str(nfs_root / "runtime" / "protocol")}")\n'
     )
     startup.write_text(cmd_txt)
