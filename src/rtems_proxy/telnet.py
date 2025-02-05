@@ -156,8 +156,6 @@ class TelnetRTEMS:
                 self.reboot(RtemsState.IOC)
                 self._child.expect(self.IOC_STARTED, timeout=50)
 
-        report("press enter for IOC shell prompt")
-
     def get_boot_prompt(self):
         """
         Get to the bootloader prompt, if the IOC shell is running then exit

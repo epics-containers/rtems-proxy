@@ -53,9 +53,4 @@ def copy_rtems():
     startup = dest_runtime / "st.cmd"
     cmd_txt = startup.read_text()
     cmd_txt = re.sub("/epics/", f"{str(nfs_root)}/", cmd_txt)
-    # also fix up the protocol path to point to protocol_folder
-    cmd_txt = (
-        cmd_txt
-        + f'\nepicsEnvSet("STREAM_PROTOCOL_PATH", "{str(nfs_root / "runtime" / "protocol")}")\n'
-    )
     startup.write_text(cmd_txt)
