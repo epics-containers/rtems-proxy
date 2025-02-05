@@ -41,6 +41,11 @@ def copy_rtems():
         dest = protocol_folder / proto_file.name
         shutil.copy(proto_file, dest)
 
+    # make sure all files are writable - by default some products are read-only
+    for folder in [dest_ioc, dest_runtime]:
+        for file in folder.glob("**/*"):
+            file.chmod(0o666)
+
     # copy all the files needed for runtime into the PVC that is being shared
     # over nfs/tftp by the nfsv2-tftp service
     for folder in ["bin", "dbd"]:
