@@ -32,10 +32,12 @@ def copy_rtems():
     # st.cmd and ioc.db
     dest_runtime = local_root / "runtime"
 
-    # TODO - perhaps do protocol files in this fashion for linux IOCs too,
-    # in which case this needs to go somewhere generic
     protocol_folder = GLOBALS.RUNTIME / "protocol"
     protocol_folder.mkdir(parents=True, exist_ok=True)
+
+    # TODO - perhaps do protocol files in this fashion for linux IOCs too,
+    # in which case this needs to go somewhere generic
+    dest_ioc.mkdir(parents=True, exist_ok=True)
     protocol_files = GLOBALS.SUPPORT.glob("**/*.proto*")
     for proto_file in protocol_files:
         dest = protocol_folder / proto_file.name
