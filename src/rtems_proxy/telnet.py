@@ -36,8 +36,9 @@ class TelnetRTEMS:
     IOC_CHECK = "\ntaskwdShow"
     IOC_RESPONSE = "free nodes"
     NO_CONNECTION = "Connection closed by foreign host"
+    FAIL_STRINGS = ["Exception", "RTEMS_FATAL_SOURCE_EXCEPTION"]
 
-    def __init__(self, host_and_port: str, ioc_reboot: bool):
+    def __init__(self, host_and_port: str, ioc_reboot: bool = False):
         self._hostname, self._port = host_and_port.split(":")
         self._ioc_reboot = ioc_reboot
         self._child = None
@@ -91,6 +92,7 @@ class TelnetRTEMS:
         while retries > 0:
             try:
                 # see if we are in the IOC shell
+                sleep(0.5)
                 self._child.sendline(self.IOC_CHECK)
                 self._child.expect(self.IOC_RESPONSE, timeout=1)
             except pexpect.exceptions.TIMEOUT:
@@ -136,6 +138,12 @@ class TelnetRTEMS:
             # send space to boot the IOC
             self._child.send(" ")
 
+    def wait_epics_prompt(self, timeout=50):
+        expects = self.FAIL_STRINGS + [self.IOC_STARTED]
+        index = self._child.expect(expects, timeout=timeout)
+        if index < len(self.FAIL_STRINGS) - 1:
+            raise RuntimeError(f"IOC boot failed - output included {expects[index]}")
+
     def get_epics_prompt(self):
         """
         Get to the IOC shell prompt, if the IOC is not already running, reboot
@@ -149,12 +157,12 @@ class TelnetRTEMS:
             sleep(0.2)
             self.reboot(RtemsState.IOC)
             self.ioc_rebooted = True
-            self._child.expect(self.IOC_STARTED, timeout=50)
+            self.wait_epics_prompt()
         else:
             if self._ioc_reboot and not self.ioc_rebooted:
                 self.ioc_rebooted = True
                 self.reboot(RtemsState.IOC)
-                self._child.expect(self.IOC_STARTED, timeout=50)
+                self.wait_epics_prompt()
 
     def get_boot_prompt(self):
         """
@@ -170,6 +178,20 @@ class TelnetRTEMS:
             self._child.expect(self.MOT_PROMPT, timeout=20)
 
         report("press enter for bootloader prompt")
+
+    def sendline(self, command: str) -> None:
+        """
+        Send a command to the telnet session
+        """
+        assert self._child, "must call connect before send"
+        self._child.sendline(command)
+
+    def expect(self, pattern, timeout=10) -> None:
+        """
+        Expect a pattern in the telnet session
+        """
+        assert self._child, "must call connect before expect"
+        self._child.expect(pattern, timeout=timeout)
 
     def close(self):
         if self._child:
@@ -187,7 +209,12 @@ def report(message):
     print(f"\n>>>> {message} <<<<\n")
 
 
-def ioc_connect(host_and_port: str, reboot: bool = False):
+def ioc_connect(
+    host_and_port: str,
+    reboot: bool = False,
+    attach: bool = True,
+    raise_errors: bool = False,
+):
     """
     Entrypoint to make a connection to an RTEMS IOC over telnet.
     Once connected, enters an interactive user session with the IOC.
@@ -200,6 +227,11 @@ def ioc_connect(host_and_port: str, reboot: bool = False):
 
     try:
         telnet.connect()
+
+        # this will untangle a partially executed gevEdit command
+        for _ in range(3):
+            telnet.sendline("\r")
+
         if reboot:
             telnet.get_epics_prompt()
         else:
@@ -207,7 +239,28 @@ def ioc_connect(host_and_port: str, reboot: bool = False):
     except (CannotConnect, pexpect.exceptions.TIMEOUT):
         report("Connection failed. Exiting")
         telnet.close()
+        if raise_errors:
+            raise
     else:
         telnet.close()
-        report("Connecting to IOC console, hit enter for a prompt")
-        run_command(telnet.command)
+        if attach:
+            report("Connecting to IOC console, hit enter for a prompt")
+            run_command(telnet.command)
+
+
+def motboot_connect(host_and_port: str) -> TelnetRTEMS:
+    """
+    Connect to the MOTBoot bootloader prompt, rebooting if needed.
+
+    Returns a TelnetRTEMS object that is connected to the MOTBoot bootloader
+    """
+    telnet = TelnetRTEMS(host_and_port)
+    telnet.connect()
+
+    # this will untangle a partially executed gevEdit command
+    for _ in range(3):
+        telnet.sendline("\r")
+
+    telnet.get_boot_prompt()
+
+    return telnet

@@ -1,13 +1,17 @@
+from datetime import datetime
 from pathlib import Path
 
 import typer
 from jinja2 import Template
 from ruamel.yaml import YAML
 
+from rtems_proxy.utils import run_command
+
 from . import __version__
+from .configure import Configure
 from .copy import copy_rtems
 from .globals import GLOBALS
-from .telnet import ioc_connect, report
+from .telnet import ioc_connect, motboot_connect, report
 
 __all__ = ["main"]
 
@@ -70,7 +74,7 @@ def start(
     if copy:
         copy_rtems()
     if connect:
-        ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot)
+        ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot, attach=True)
     else:
         report("IOC console connection disabled. ")
 
@@ -154,8 +158,42 @@ def dev(
     typer.echo(f"\n\nPlease first source {script_file} to set up the dev environment.")
 
 
-# test with:
-#     pipenv run python -m ibek
+@cli.command()
+def configure(
+    debug: bool = typer.Option(False, help="use debug ioc binary"),
+    attach: bool = typer.Option(
+        False, help="attach to the IOC console after configuration"
+    ),
+):
+    """
+    Configure the RTEMS IOC boot parameters
+    """
+    telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE)
+    config = Configure(telnet, debug)
+    config.apply_settings()
+    telnet.close()
+    if attach:
+        run_command(telnet.command)
+
+
+@cli.command()
+def stress():
+    """
+    Stress test the IOC by constantly rebooting and checking for failed boot
+
+    Aborts and prints the time when a failed boot is detected
+    """
+    try:
+        tries = 0
+        while True:
+            tries += 1
+            print(f">>>>>> REBOOT ATTEMPT {tries} <<<<<<<")
+            ioc_connect(
+                GLOBALS.RTEMS_CONSOLE, reboot=True, attach=False, raise_errors=True
+            )
+    except Exception as e:
+        msg = f"\n\nIOC boot number {tries} failed at {datetime.now()}.\n\n"
+        raise RuntimeError(msg) from e
 
 
 if __name__ == "__main__":

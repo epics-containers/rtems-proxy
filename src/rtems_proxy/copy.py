@@ -2,16 +2,15 @@
 functions for moving IOC assets into position for a remote IOC to access
 """
 
-import re
 import shutil
-from pathlib import Path
 
 from .globals import GLOBALS
 
 
 def copy_rtems():
     """
-    Copy RTEMS binaries to a location where the RTEMS IOC can access them
+    Copy RTEMS IOC binary and startup assets to a location where the RTEMS IOC
+    can access them
 
     IMPORTANT: local_root and nfs_root are different perspectives on the same
                folder.
@@ -23,7 +22,6 @@ def copy_rtems():
                 will look for them using NFS.
     """
     local_root = GLOBALS.RTEMS_TFTP_PATH
-    nfs_root = Path("/iocs") / GLOBALS.IOC_NAME
 
     # where to copy the Generic IOC folder to. This will contain the IOC binary
     # and the files
@@ -55,9 +53,3 @@ def copy_rtems():
             GLOBALS.IOC.readlink() / folder, dest_ioc / folder, dirs_exist_ok=True
         )
     shutil.copytree(GLOBALS.RUNTIME, dest_runtime, dirs_exist_ok=True)
-
-    # because we moved the ioc files we need to fix up startup script paths
-    startup = dest_runtime / "st.cmd"
-    cmd_txt = startup.read_text()
-    cmd_txt = re.sub("/epics/", f"{str(nfs_root)}/", cmd_txt)
-    startup.write_text(cmd_txt)
