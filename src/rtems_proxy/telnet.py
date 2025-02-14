@@ -36,7 +36,7 @@ class TelnetRTEMS:
     IOC_CHECK = "\ntaskwdShow"
     IOC_RESPONSE = "free nodes"
     NO_CONNECTION = "Connection closed by foreign host"
-    FAIL_STRINGS = ["Exception", "RTEMS_FATAL_SOURCE_EXCEPTION"]
+    FAIL_STRINGS = ["Exception", "exception", "RTEMS_FATAL_SOURCE_EXCEPTION"]
 
     def __init__(self, host_and_port: str, ioc_reboot: bool = False):
         self._hostname, self._port = host_and_port.split(":")
@@ -141,8 +141,8 @@ class TelnetRTEMS:
     def wait_epics_prompt(self, timeout=50):
         expects = self.FAIL_STRINGS + [self.IOC_STARTED]
         index = self._child.expect(expects, timeout=timeout)
-        if index < len(self.FAIL_STRINGS) - 1:
-            raise RuntimeError(f"IOC boot failed - output included {expects[index]}")
+        if index != len(self.FAIL_STRINGS):
+            raise RuntimeError(f"IOC boot failed - output included '{expects[index]}'")
 
     def get_epics_prompt(self):
         """

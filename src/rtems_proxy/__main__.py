@@ -5,6 +5,7 @@ import typer
 from jinja2 import Template
 from ruamel.yaml import YAML
 
+from rtems_proxy.trace import parse_stack_trace
 from rtems_proxy.utils import run_command
 
 from . import __version__
@@ -194,6 +195,22 @@ def stress():
     except Exception as e:
         msg = f"\n\nIOC boot number {tries} failed at {datetime.now()}.\n\n"
         raise RuntimeError(msg) from e
+
+
+@cli.command()
+def trace(
+    trace_file: Path = typer.Argument(
+        ...,
+        help="The path to the file containing the stack trace",
+        file_okay=True,
+        exists=True,
+    ),
+):
+    """
+    Parse a stack trace from a RTEMS failure
+    """
+    trace = trace_file.read_text()
+    parse_stack_trace(trace)
 
 
 if __name__ == "__main__":
