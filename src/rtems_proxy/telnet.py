@@ -236,16 +236,24 @@ def ioc_connect(
             telnet.get_epics_prompt()
         else:
             report("Auto reboot disabled. Skipping reboot")
+
     except (CannotConnect, pexpect.exceptions.TIMEOUT):
-        report("Connection failed. Exiting")
+        report("Connection failed, Exiting.")
+        telnet.close()
+        raise
+
+    except Exception as e:
+        # still show the remaining output
+        telnet.expect("_main_")
+        report(f"An error occurred: {e}")
         telnet.close()
         if raise_errors:
             raise
-    else:
-        telnet.close()
-        if attach:
-            report("Connecting to IOC console, hit enter for a prompt")
-            run_command(telnet.command)
+
+    telnet.close()
+    if attach:
+        report("Connecting to IOC console, hit enter for a prompt")
+        run_command(telnet.command)
 
 
 def motboot_connect(host_and_port: str) -> TelnetRTEMS:

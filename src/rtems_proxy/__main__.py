@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from time import sleep
 
 import typer
 from jinja2 import Template
@@ -51,6 +52,9 @@ def start(
     reboot: bool = typer.Option(
         True, "--reboot/--no-reboot", help="reboot the IOC first"
     ),
+    raise_errors: bool = typer.Option(
+        True, "--raise-errors/--no-raise-errors", help="raise errors instead of exiting"
+    ),
 ):
     """
     Starts an RTEMS IOC. Places the IOC binaries in the expected location,
@@ -75,7 +79,9 @@ def start(
     if copy:
         copy_rtems()
     if connect:
-        ioc_connect(GLOBALS.RTEMS_CONSOLE, reboot=reboot, attach=True)
+        ioc_connect(
+            GLOBALS.RTEMS_CONSOLE, reboot=reboot, attach=True, raise_errors=raise_errors
+        )
     else:
         report("IOC console connection disabled. ")
 
@@ -192,6 +198,7 @@ def stress():
             ioc_connect(
                 GLOBALS.RTEMS_CONSOLE, reboot=True, attach=False, raise_errors=True
             )
+            sleep(5)
     except Exception as e:
         msg = f"\n\nIOC boot number {tries} failed at {datetime.now()}.\n\n"
         raise RuntimeError(msg) from e
