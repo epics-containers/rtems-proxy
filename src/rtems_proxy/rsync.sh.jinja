@@ -48,7 +48,7 @@ while true; do
   for i in 1 2 3 ; do
     # repeat because inotify fires on the first change of several
     # don't copy the huge ioc binary file with symbols
-    rsync -rim --exclude bin/RTEMS-beatnik/ioc --delete /$RTEMS_TFTP_PATH/ \
+    rsync -rim --delete /$RTEMS_TFTP_PATH/ \
           "rsync://$RTEMS_TFTP_IP:12002/files/$IOC_NAME/"
     sleep 1
   done
