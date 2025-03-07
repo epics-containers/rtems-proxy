@@ -50,7 +50,7 @@ class _Globals:
         self.RTEMS_TFTP_IP = os.getenv("RTEMS_TFTP_IP")
         """ address of a TFTP server that the RTEMS IOC can access """
 
-        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE", "NO_CONSOLE")
+        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
         """ address:port to connect to the IOC console """
 
         self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
@@ -58,6 +58,10 @@ class _Globals:
 
         self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
         """ the name of the repository that this IOC is grouped into """
+
+        for v in [self.RTEMS_CONSOLE, self.IOC_NAME]:
+            if v is None or v == "":
+                raise ValueError("RTEMS_CONSOLE and IOC_NAME must be set")
 
 
 GLOBALS = _Globals()
