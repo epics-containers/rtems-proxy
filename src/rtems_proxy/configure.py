@@ -20,6 +20,18 @@ class Configure:
         self.telnet.sendline("Y\r")
 
     def apply_settings(self):
+        for v in [
+            GLOBALS.RTEMS_IOC_NETMASK,
+            GLOBALS.RTEMS_IOC_GATEWAY,
+            GLOBALS.RTEMS_IOC_IP,
+            GLOBALS.RTEMS_NFS_IP,
+            GLOBALS.RTEMS_TFTP_IP,
+        ]:
+            if v is None or v == "":
+                raise ValueError(
+                    "RTEMS_IOC_NETMASK, RTEMS_IOC_GATEWAY, RTEMS_IOC_IP, "
+                    "RTEMS_NFS_IP, and RTEMS_TFTP_IP must be set"
+                )
         nfs_mount = f"{GLOBALS.RTEMS_NFS_IP}:/iocs/{GLOBALS.IOC_NAME}:/epics"
         ioc_bin = "ioc" if self.debug else "ioc.boot"
         mot_boot = (
