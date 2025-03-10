@@ -79,6 +79,7 @@ def start(
     if copy:
         copy_rtems()
     if connect:
+        assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
         ioc_connect(
             GLOBALS.RTEMS_CONSOLE, reboot=reboot, attach=True, raise_errors=raise_errors
         )
@@ -175,6 +176,8 @@ def configure(
     """
     Configure the RTEMS IOC boot parameters
     """
+
+    assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
     telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE)
     config = Configure(telnet, debug)
     config.apply_settings()
