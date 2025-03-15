@@ -30,17 +30,6 @@ def copy_rtems():
     # st.cmd and ioc.db
     dest_runtime = local_root / "runtime"
 
-    protocol_folder = GLOBALS.RUNTIME / "protocol"
-    protocol_folder.mkdir(parents=True, exist_ok=True)
-
-    # TODO - perhaps do protocol files in this fashion for linux IOCs too,
-    # in which case this needs to go somewhere generic
-    dest_ioc.mkdir(parents=True, exist_ok=True)
-    protocol_files = GLOBALS.SUPPORT.glob("**/*.proto*")
-    for proto_file in protocol_files:
-        dest = protocol_folder / proto_file.name
-        shutil.copy(proto_file, dest)
-
     # make sure all files are writable - by default some products are read-only
     for folder in [dest_ioc, dest_runtime]:
         for file in folder.glob("**/*"):
