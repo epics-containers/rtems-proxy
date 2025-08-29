@@ -66,6 +66,9 @@ venv*
 
 # further build artifacts
 lockfiles/
+uv.lock
 
 # ruff cache
 .ruff_cache/
+
+bl21i-pss-ioc-01.sh
