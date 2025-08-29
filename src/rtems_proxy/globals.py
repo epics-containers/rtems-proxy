@@ -59,5 +59,17 @@ class _Globals:
         self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
         """ the name of the repository that this IOC is grouped into """
 
+        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT")
+        """ override for the EPICS startup script """
+
+        self.RTEMS_EPICS_BINARY = os.getenv("RTEMS_EPICS_BINARY")
+        """ override for the EPICS binary """
+
+        self.RTEMS_EPICS_NTP_SERVER = os.getenv("RTEMS_EPICS_NTP_SERVER")
+        """ ip address for the ntp server """
+
+        self.RTEMS_EPICS_NFS_MOUNT = os.getenv("RTEMS_EPICS_NFS_MOUNT")
+        """ NFS mount point for the EPICS IOC """
+
 
 GLOBALS = _Globals()

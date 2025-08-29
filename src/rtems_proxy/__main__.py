@@ -172,13 +172,16 @@ def configure(
     attach: bool = typer.Option(
         False, help="attach to the IOC console after configuration"
     ),
+    use_console: bool = typer.Option(
+        False, help="use conserver console instead of telnet"
+    ),
 ):
     """
     Configure the RTEMS IOC boot parameters
     """
 
     assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
-    telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE)
+    telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
     config = Configure(telnet, debug)
     config.apply_settings()
     telnet.close()

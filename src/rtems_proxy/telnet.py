@@ -38,13 +38,21 @@ class TelnetRTEMS:
     NO_CONNECTION = "Connection closed by foreign host"
     FAIL_STRINGS = ["Exception", "exception", "RTEMS_FATAL_SOURCE_EXCEPTION"]
 
-    def __init__(self, host_and_port: str, ioc_reboot: bool = False):
-        self._hostname, self._port = host_and_port.split(":")
+    def __init__(
+        self, host_and_port: str, ioc_reboot: bool = False, use_console: bool = False
+    ):
         self._ioc_reboot = ioc_reboot
         self._child = None
+        self._port = ""
 
         self.ioc_rebooted = False
-        self.command = f"telnet {self._hostname} {self._port}"
+        if use_console:
+            # console needs no port
+            self._hostname = host_and_port
+            self.command = f"console {self._hostname}"
+        else:
+            self._hostname, self._port = host_and_port.split(":")
+            self.command = f"telnet {self._hostname} {self._port}"
 
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
@@ -256,13 +264,15 @@ def ioc_connect(
         run_command(telnet.command)
 
 
-def motboot_connect(host_and_port: str) -> TelnetRTEMS:
+def motboot_connect(
+    host_and_port: str, reboot: bool = False, use_console: bool = False
+) -> TelnetRTEMS:
     """
     Connect to the MOTBoot bootloader prompt, rebooting if needed.
 
     Returns a TelnetRTEMS object that is connected to the MOTBoot bootloader
     """
-    telnet = TelnetRTEMS(host_and_port)
+    telnet = TelnetRTEMS(host_and_port, ioc_reboot=reboot, use_console=use_console)
     telnet.connect()
 
     # this will untangle a partially executed gevEdit command
