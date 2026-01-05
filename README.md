@@ -11,6 +11,7 @@ Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs
 Source          | <https://github.com/epics-containers/rtems-proxy>
 :---:           | :---:
 PyPI            | `pip install rtems-proxy`
+Docker          | `docker run ghcr.io/epics-containers/rtems-proxy:latest`
 Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 
 ```
