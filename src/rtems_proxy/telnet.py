@@ -8,7 +8,7 @@ import pexpect
 from .utils import run_command
 
 
-class CannotConnect(Exception):
+class CannotConnectError(Exception):
     pass
 
 
@@ -87,7 +87,7 @@ class TelnetRTEMS:
             pass
         else:
             report("Cannot connect to remote IOC, connection in use?")
-            raise CannotConnect
+            raise CannotConnectError
 
     def check_prompt(self, retries=5) -> RtemsState:
         """
@@ -122,7 +122,7 @@ class TelnetRTEMS:
             retries -= 1
 
         report("Current state UNKNOWN")
-        raise CannotConnect("Current state of remote IOC unknown")
+        raise CannotConnectError("Current state of remote IOC unknown")
 
     def reboot(self, into: RtemsState):
         """
@@ -245,7 +245,7 @@ def ioc_connect(
         else:
             report("Auto reboot disabled. Skipping reboot")
 
-    except (CannotConnect, pexpect.exceptions.TIMEOUT):
+    except (CannotConnectError, pexpect.exceptions.TIMEOUT):
         report("Connection failed, Exiting.")
         telnet.close()
         raise
