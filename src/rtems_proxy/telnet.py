@@ -97,7 +97,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before check_prompt"
 
-        while retries > 0:
+        for retry in range(retries):
             try:
                 # see if we are in the IOC shell
                 sleep(0.5)
@@ -118,8 +118,7 @@ class TelnetRTEMS:
                 report("Currently in IOC shell")
                 return RtemsState.IOC
 
-            report("Retrying get current status")
-            retries -= 1
+            report(f"Retry {retry} of get current status")
 
         report("Current state UNKNOWN")
         raise CannotConnectError("Current state of remote IOC unknown")
@@ -138,7 +137,7 @@ class TelnetRTEMS:
         else:
             self._child.sendline("exit")
 
-        self._child.expect(self.CONTINUE, timeout=10)
+        self._child.expect(self.CONTINUE, timeout=30)
         if into == RtemsState.MOT:
             # send escape to get into the bootloader
             self._child.sendline(chr(27))
@@ -154,7 +153,7 @@ class TelnetRTEMS:
         if index != len(self.FAIL_STRINGS):
             raise RuntimeError(f"IOC boot failed - output included '{expects[index]}'")
 
-    def get_epics_prompt(self):
+    def get_epics_prompt(self, retries=5):
         """
         Get to the IOC shell prompt, if the IOC is not already running, reboot
         it into the IOC shell. If the IOC is running, do a reboot only if
@@ -162,7 +161,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_epics_prompt"
 
-        current = self.check_prompt()
+        current = self.check_prompt(retries=retries)
         if current != RtemsState.IOC:
             sleep(0.2)
             self.reboot(RtemsState.IOC)
@@ -181,7 +180,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_boot_prompt"
 
-        current = self.check_prompt()
+        current = self.check_prompt(retries=10)
         if current != RtemsState.MOT:
             # get out of the IOC and return to MOT
             self.reboot(RtemsState.MOT)
@@ -255,7 +254,7 @@ def ioc_connect(
             telnet.sendline("\r")
 
         if reboot:
-            telnet.get_epics_prompt()
+            telnet.get_epics_prompt(retries=10)
         else:
             report("Auto reboot disabled. Skipping reboot")
 
