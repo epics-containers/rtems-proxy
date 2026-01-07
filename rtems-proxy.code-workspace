@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../i06-services"
+		},
+		{
+			"path": "../i04-services"
+		}
+	],
+	"settings": {}
+}

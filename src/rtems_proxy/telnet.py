@@ -89,7 +89,7 @@ class TelnetRTEMS:
             report("Cannot connect to remote IOC, connection in use?")
             raise CannotConnectError
 
-    def check_prompt(self, retries=5) -> RtemsState:
+    def check_prompt(self, retries) -> RtemsState:
         """
         Determine if we are currently seeing an IOC shell prompt or
         bootloader. Because there is a possibility that we are in the middle
@@ -118,7 +118,7 @@ class TelnetRTEMS:
                 report("Currently in IOC shell")
                 return RtemsState.IOC
 
-            report(f"Retry {retry} of get current status")
+            report(f"Retry {retry + 1} of get current status")
 
         report("Current state UNKNOWN")
         raise CannotConnectError("Current state of remote IOC unknown")
@@ -131,7 +131,7 @@ class TelnetRTEMS:
         assert self._child, "must call connect before reboot"
 
         report(f"Rebooting into {into.name}")
-        current_state = self.check_prompt()
+        current_state = self.check_prompt(retries=2)
         if current_state == RtemsState.MOT:
             self._child.sendline("reset")
         else:
@@ -145,20 +145,6 @@ class TelnetRTEMS:
             # send space to boot the IOC
             self._child.send(" ")
 
-    def wait_epics_prompt(self, timeout=50, retries=3):
-        if self._child is None:
-            raise RuntimeError("Connection not established")
-        expects: list[str] = [self.IOC_STARTED] + self.FAIL_STRINGS
-        index = 0
-
-        for _retry in range(retries):
-            index = self._child.expect(expects, timeout=timeout)  # type: ignore[arg-type]
-
-            if index == 0:
-                break  # we got the success prompt
-        else:
-            raise RuntimeError(f"IOC boot failed - output included '{expects[index]}'")
-
     def get_epics_prompt(self, retries=5):
         """
         Get to the IOC shell prompt, if the IOC is not already running, reboot
@@ -167,17 +153,18 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_epics_prompt"
 
-        current = self.check_prompt(retries=retries)
-        if current != RtemsState.IOC:
-            sleep(0.2)
+        current = self.check_prompt(retries=10)
+
+        if current != RtemsState.IOC or (self._ioc_reboot and not self.ioc_rebooted):
+            sleep(0.5)
+            report("Rebooting the IOC")
+
             self.reboot(RtemsState.IOC)
             self.ioc_rebooted = True
-            self.wait_epics_prompt()
-        else:
-            if self._ioc_reboot and not self.ioc_rebooted:
-                self.ioc_rebooted = True
-                self.reboot(RtemsState.IOC)
-                self.wait_epics_prompt()
+
+            current = self.check_prompt(retries=10)
+            if current != RtemsState.IOC:
+                raise CannotConnectError("Failed to reboot into IOC shell")
 
     def get_boot_prompt(self):
         """
