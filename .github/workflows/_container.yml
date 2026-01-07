@@ -45,7 +45,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}-runtime
           tags: |
             type=ref,event=tag
             type=raw,value=latest
@@ -62,3 +62,26 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create tags for publishing image
+        id: meta-developer
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-developer
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+
+      - name: Push cached developer (build target) image to container registry
+        if: inputs.publish && github.ref_type == 'tag'
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+        # This does not build the image again, it will find the image in the
+        # Docker cache and publish it
+        with:
+          context: .
+          target: build
+          push: true
+          tags: ${{ steps.meta-developer.outputs.tags }}
+          labels: ${{ steps.meta-developer.outputs.labels }}
