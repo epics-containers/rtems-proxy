@@ -12,7 +12,14 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 description = "Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs"
-dependencies = ["jinja2", "pexpect", "ruamel.yaml", "telnetlib3", "typer"]
+dependencies = [
+    "jinja2",
+    "pexpect",
+    "ruamel.yaml",
+    "stdio-socket>=1.3.1",
+    "telnetlib3",
+    "typer",
+]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"
@@ -125,8 +132,6 @@ lint.ignore = [
     "C408", # Unnecessary collection call - e.g. list(...) instead of [...]
     "E501", # Line too long, should be fixed by black.
 ]
-src = ["src", "tests"]
-line-length = 88
 lint.select = [
     "B",   # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
     "C4",  # flake8-comprehensions - https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
@@ -138,6 +143,8 @@ lint.select = [
     "UP",  # pyupgrade - https://docs.astral.sh/ruff/rules/#pyupgrade-up
     "SLF", # self - https://docs.astral.sh/ruff/settings/#lintflake8-self
 ]
+src = ["src", "tests"]
+line-length = 88
 
 [tool.ruff.lint.per-file-ignores]
 # By default, private member access is allowed in tests
