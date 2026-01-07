@@ -196,8 +196,11 @@ def stress():
 
     Aborts and prints the time when a failed boot is detected
     """
+    if not GLOBALS.RTEMS_CONSOLE:
+        raise ValueError("RTEMS_CONSOLE must be set")
+
+    tries = 0
     try:
-        tries = 0
         while True:
             tries += 1
             print(f">>>>>> REBOOT ATTEMPT {tries} <<<<<<<")

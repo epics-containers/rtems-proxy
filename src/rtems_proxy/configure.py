@@ -40,7 +40,7 @@ class Configure:
         if GLOBALS.RTEMS_EPICS_NFS_MOUNT:
             nfs_mount = GLOBALS.RTEMS_EPICS_NFS_MOUNT
         else:
-            epics_script = f"{GLOBALS.RTEMS_NFS_IP}:/iocs/{GLOBALS.IOC_NAME}:/epics"
+            nfs_mount = f"{GLOBALS.RTEMS_NFS_IP}:/iocs/{GLOBALS.IOC_NAME}:/epics"
 
         if GLOBALS.RTEMS_EPICS_SCRIPT:
             epics_script = GLOBALS.RTEMS_EPICS_SCRIPT
@@ -67,6 +67,12 @@ class Configure:
 
         if GLOBALS.RTEMS_EPICS_NTP_SERVER:
             self.apply_nvm("epics-ntpserver", GLOBALS.RTEMS_EPICS_NTP_SERVER)
+
+        # These checks were performed above, so we can safely assert non-None
+        assert GLOBALS.RTEMS_IOC_NETMASK is not None
+        assert GLOBALS.RTEMS_IOC_GATEWAY is not None
+        assert GLOBALS.RTEMS_NFS_IP is not None
+        assert GLOBALS.RTEMS_IOC_IP is not None
 
         self.apply_nvm("mot-/dev/enet0-snma", GLOBALS.RTEMS_IOC_NETMASK)
         self.apply_nvm("mot-/dev/enet0-gipa", GLOBALS.RTEMS_IOC_GATEWAY)

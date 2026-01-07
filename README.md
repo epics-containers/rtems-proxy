@@ -17,3 +17,35 @@ Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 ```
 rtems_proxy --help
 ```
+## Development
+
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
+
+### Running Tests and Type Checking
+
+Use `uv` to run the tox test suite:
+
+```bash
+uv run tox -p
+```
+
+This will run:
+- `tests` - pytest with coverage
+- `type-checking` - pyright static type checking
+- `pre-commit` - code formatting and linting
+
+To run a specific tox environment:
+
+```bash
+uv run tox -e type-checking
+uv run tox -e tests
+uv run tox -e pre-commit
+```
+
+### Installing Dependencies
+
+Install all dependencies including dev dependencies:
+
+```bash
+uv sync --group dev
+```
