@@ -145,12 +145,18 @@ class TelnetRTEMS:
             # send space to boot the IOC
             self._child.send(" ")
 
-    def wait_epics_prompt(self, timeout=50):
+    def wait_epics_prompt(self, timeout=50, retries=3):
         if self._child is None:
             raise RuntimeError("Connection not established")
-        expects: list[str] = self.FAIL_STRINGS + [self.IOC_STARTED]
-        index = self._child.expect(expects, timeout=timeout)  # type: ignore[arg-type]
-        if index != len(self.FAIL_STRINGS):
+        expects: list[str] = [self.IOC_STARTED] + self.FAIL_STRINGS
+        index = 0
+
+        for _retry in range(retries):
+            index = self._child.expect(expects, timeout=timeout)  # type: ignore[arg-type]
+
+            if index == 0:
+                break  # we got the success prompt
+        else:
             raise RuntimeError(f"IOC boot failed - output included '{expects[index]}'")
 
     def get_epics_prompt(self, retries=5):
