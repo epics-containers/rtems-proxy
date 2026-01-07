@@ -203,6 +203,18 @@ class TelnetRTEMS:
         assert self._child, "must call connect before expect"
         self._child.expect(pattern, timeout=timeout)
 
+    def flush_remaining_output(self) -> None:
+        """
+        Flush any remaining buffered output to stdout.
+        Useful for displaying output before error reporting.
+        """
+        try:
+            if self._child:
+                self._child.read_nonblocking(size=8192, timeout=0.5)
+        except (pexpect.exceptions.TIMEOUT, pexpect.exceptions.EOF):
+            # no more output available, which is fine
+            pass
+
     def close(self):
         if self._child:
             self._child.close()
@@ -253,8 +265,8 @@ def ioc_connect(
         raise
 
     except Exception as e:
-        # still show the remaining output
-        telnet.expect("_main_")
+        # flush any remaining buffered output to stdout
+        telnet.flush_remaining_output()
         report(f"An error occurred: {e}")
         telnet.close()
         if raise_errors:
