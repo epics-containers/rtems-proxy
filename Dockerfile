@@ -3,9 +3,9 @@
 FROM ghcr.io/diamondlightsource/ubuntu-devcontainer:noble AS developer
 
 # Add any system dependencies for the developer/build environment here
-# RUN apt-get update -y && apt-get install -y --no-install-recommends \
-#     graphviz \
-#     && apt-get dist-clean
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    rsync \
+    && apt-get dist-clean
 
 # The build stage installs the context into the venv
 FROM developer AS build
