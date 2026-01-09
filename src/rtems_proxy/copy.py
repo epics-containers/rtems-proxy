@@ -48,10 +48,10 @@ def copy_rtems(debug: bool = False):
         check=True,
     )
 
-    # symlink the ioc start to a fixed name 'st.cmd'
+    # move the ioc startup script to a fixed name 'st.cmd'
     ioc_script_path = Path(local_nfs_root) / GLOBALS.RTEMS_SCRIPT_DEFAULT_NAME
     ioc_script_path.unlink(missing_ok=True)
-    ioc_script_path.symlink_to(Path(local_nfs_root) / ioc_script_name)
+    ioc_script_path.rename(Path(local_nfs_root) / ioc_script_name)
 
     # TODO for container built IOCs the name will be ioc or ioc.boot
     if debug:
@@ -69,7 +69,7 @@ def copy_rtems(debug: bool = False):
         check=True,
     )
 
-    # symlink the ioc_bin to a fixed name 'rtems.ioc.boot' in the TFTP root
+    # move the ioc_bin to a fixed name 'rtems.ioc.bin' in the TFTP root
     tftp_ioc_boot = Path(local_tftp_root) / GLOBALS.RTEMS_BINARY_DEFAULT_NAME
     tftp_ioc_boot.unlink(missing_ok=True)
-    tftp_ioc_boot.symlink_to(Path(local_tftp_root) / ioc_bin)
+    tftp_ioc_boot.rename(Path(local_tftp_root) / ioc_bin)
