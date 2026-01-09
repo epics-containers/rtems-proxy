@@ -4,7 +4,7 @@ import typer
 
 
 def run_command(
-    command: str, interactive=True, error_OK=False, show=False
+    command: str, interactive=True, error_ok=False, show=False
 ) -> str | bool:
     """
     Run a command and return the output
@@ -33,7 +33,7 @@ def run_command(
     else:
         result = output + error_out
 
-    if p_result.returncode != 0 and not error_OK:
+    if p_result.returncode != 0 and not error_ok:
         typer.echo("\nCommand Failed:")
         typer.echo(output)
         typer.echo(error_out)

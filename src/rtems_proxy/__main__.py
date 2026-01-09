@@ -172,6 +172,9 @@ def configure(
     attach: bool = typer.Option(
         False, help="attach to the IOC console after configuration"
     ),
+    dry_run: bool = typer.Option(
+        False, help="print the configuration commands without applying them"
+    ),
     use_console: bool = typer.Option(
         False, help="use conserver console instead of telnet"
     ),
@@ -180,13 +183,19 @@ def configure(
     Configure the RTEMS IOC boot parameters
     """
 
-    assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
-    telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
-    config = Configure(telnet, debug)
-    config.apply_settings()
-    telnet.close()
-    if attach:
-        run_command(telnet.command)
+    if dry_run:
+        config = Configure(None, debug=debug, dry_run=True)
+        config.apply_settings()
+    else:
+        assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
+
+        config = Configure(None, debug=debug)
+        telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
+        config = Configure(telnet, debug=debug, dry_run=dry_run)
+        config.apply_settings()
+        telnet.close()
+        if attach:
+            run_command(telnet.command)
 
 
 @cli.command()
@@ -196,8 +205,11 @@ def stress():
 
     Aborts and prints the time when a failed boot is detected
     """
+    if not GLOBALS.RTEMS_CONSOLE:
+        raise ValueError("RTEMS_CONSOLE must be set")
+
+    tries = 0
     try:
-        tries = 0
         while True:
             tries += 1
             print(f">>>>>> REBOOT ATTEMPT {tries} <<<<<<<")

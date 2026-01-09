@@ -1,16 +1,18 @@
 # Changes here will be overwritten by Copier
-_commit: 2.6.0
-_src_path: gh:DiamondLightSource/python-copier-template
+_commit: 5.0.1
+_src_path: https://github.com/DiamondLightSource/python-copier-template
 author_email: giles.knap@diamond.ac.uk
 author_name: Giles Knap
 description: Support for a K8S proxy container in controlling and monitoring RTEMS
     EPICS IOCs
 distribution_name: rtems-proxy
-docker: false
+docker: true
+docker_debug: false
 docs_type: README
 git_platform: github.com
 github_org: epics-containers
 package_name: rtems_proxy
 pypi: true
 repo_name: rtems-proxy
-type_checker: mypy
+strict_typing: false
+type_checker: pyright

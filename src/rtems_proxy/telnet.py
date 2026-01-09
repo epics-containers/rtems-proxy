@@ -8,7 +8,7 @@ import pexpect
 from .utils import run_command
 
 
-class CannotConnect(Exception):
+class CannotConnectError(Exception):
     pass
 
 
@@ -87,9 +87,9 @@ class TelnetRTEMS:
             pass
         else:
             report("Cannot connect to remote IOC, connection in use?")
-            raise CannotConnect
+            raise CannotConnectError
 
-    def check_prompt(self, retries=5) -> RtemsState:
+    def check_prompt(self, retries) -> RtemsState:
         """
         Determine if we are currently seeing an IOC shell prompt or
         bootloader. Because there is a possibility that we are in the middle
@@ -97,7 +97,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before check_prompt"
 
-        while retries > 0:
+        for retry in range(retries):
             try:
                 # see if we are in the IOC shell
                 sleep(0.5)
@@ -118,11 +118,10 @@ class TelnetRTEMS:
                 report("Currently in IOC shell")
                 return RtemsState.IOC
 
-            report("Retrying get current status")
-            retries -= 1
+            report(f"Retry {retry + 1} of get current status")
 
         report("Current state UNKNOWN")
-        raise CannotConnect("Current state of remote IOC unknown")
+        raise CannotConnectError("Current state of remote IOC unknown")
 
     def reboot(self, into: RtemsState):
         """
@@ -132,13 +131,13 @@ class TelnetRTEMS:
         assert self._child, "must call connect before reboot"
 
         report(f"Rebooting into {into.name}")
-        current_state = self.check_prompt()
+        current_state = self.check_prompt(retries=2)
         if current_state == RtemsState.MOT:
             self._child.sendline("reset")
         else:
             self._child.sendline("exit")
 
-        self._child.expect(self.CONTINUE, timeout=10)
+        self._child.expect(self.CONTINUE, timeout=30)
         if into == RtemsState.MOT:
             # send escape to get into the bootloader
             self._child.sendline(chr(27))
@@ -146,13 +145,7 @@ class TelnetRTEMS:
             # send space to boot the IOC
             self._child.send(" ")
 
-    def wait_epics_prompt(self, timeout=50):
-        expects = self.FAIL_STRINGS + [self.IOC_STARTED]
-        index = self._child.expect(expects, timeout=timeout)
-        if index != len(self.FAIL_STRINGS):
-            raise RuntimeError(f"IOC boot failed - output included '{expects[index]}'")
-
-    def get_epics_prompt(self):
+    def get_epics_prompt(self, retries=5):
         """
         Get to the IOC shell prompt, if the IOC is not already running, reboot
         it into the IOC shell. If the IOC is running, do a reboot only if
@@ -160,17 +153,18 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_epics_prompt"
 
-        current = self.check_prompt()
-        if current != RtemsState.IOC:
-            sleep(0.2)
+        current = self.check_prompt(retries=10)
+
+        if current != RtemsState.IOC or (self._ioc_reboot and not self.ioc_rebooted):
+            sleep(0.5)
+            report("Rebooting the IOC")
+
             self.reboot(RtemsState.IOC)
             self.ioc_rebooted = True
-            self.wait_epics_prompt()
-        else:
-            if self._ioc_reboot and not self.ioc_rebooted:
-                self.ioc_rebooted = True
-                self.reboot(RtemsState.IOC)
-                self.wait_epics_prompt()
+
+            current = self.check_prompt(retries=10)
+            if current != RtemsState.IOC:
+                raise CannotConnectError("Failed to reboot into IOC shell")
 
     def get_boot_prompt(self):
         """
@@ -179,7 +173,7 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_boot_prompt"
 
-        current = self.check_prompt()
+        current = self.check_prompt(retries=10)
         if current != RtemsState.MOT:
             # get out of the IOC and return to MOT
             self.reboot(RtemsState.MOT)
@@ -200,6 +194,18 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before expect"
         self._child.expect(pattern, timeout=timeout)
+
+    def flush_remaining_output(self) -> None:
+        """
+        Flush any remaining buffered output to stdout.
+        Useful for displaying output before error reporting.
+        """
+        try:
+            if self._child:
+                self._child.read_nonblocking(size=8192, timeout=0.5)
+        except (pexpect.exceptions.TIMEOUT, pexpect.exceptions.EOF):
+            # no more output available, which is fine
+            pass
 
     def close(self):
         if self._child:
@@ -241,18 +247,18 @@ def ioc_connect(
             telnet.sendline("\r")
 
         if reboot:
-            telnet.get_epics_prompt()
+            telnet.get_epics_prompt(retries=10)
         else:
             report("Auto reboot disabled. Skipping reboot")
 
-    except (CannotConnect, pexpect.exceptions.TIMEOUT):
+    except (CannotConnectError, pexpect.exceptions.TIMEOUT):
         report("Connection failed, Exiting.")
         telnet.close()
         raise
 
     except Exception as e:
-        # still show the remaining output
-        telnet.expect("_main_")
+        # flush any remaining buffered output to stdout
+        telnet.flush_remaining_output()
         report(f"An error occurred: {e}")
         telnet.close()
         if raise_errors:

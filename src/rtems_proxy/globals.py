@@ -12,6 +12,77 @@ class _Globals:
     """Helper class for accessing global constants."""
 
     def __init__(self) -> None:
+        ########################################################################
+        ## Constants
+        ########################################################################
+
+        self.RTEMS_BINARY_DEFAULT_NAME = "rtems.ioc.bin"
+        self.RTEMS_SCRIPT_DEFAULT_NAME = "st.cmd"
+
+        self.RTEMS_TFTP_ROOT_PATH = Path("/ioc_tftp")
+        """ root folder of a mounted PVC in which to place IOC binaries """
+        self.RTEMS_NFS_ROOT_PATH = Path("/ioc_nfs")
+        """ root folder of a mounted NFS folder in which to place IOC binaries """
+
+        ########################################################################
+        ## Beamline level config from global.env in services/values.yaml
+        ########################################################################
+
+        self.RTEMS_IOC_GATEWAY = os.getenv("RTEMS_IOC_GATEWAY")
+        """ gateway address for the RTEMS IOC hardware """
+
+        self.RTEMS_IOC_NETMASK = os.getenv("RTEMS_IOC_NETMASK")
+        """ netmask for the real RTEMS IOC hardware """
+
+        self.RTEMS_NFS_IP = os.getenv("RTEMS_NFS_IP")
+        """ address of an NFS server that the RTEMS IOC can access """
+
+        self.RTEMS_TFTP_IP = os.getenv("RTEMS_TFTP_IP")
+        """ address of a TFTP server that the RTEMS IOC can access """
+
+        self.RTEMS_EPICS_NTP_SERVER = os.getenv("RTEMS_EPICS_NTP_SERVER")
+        """ ip address for the ntp server """
+
+        self.RTEMS_EPICS_NFS_MOUNT = os.getenv("RTEMS_EPICS_NFS_MOUNT")
+        """ NFS mount point for the EPICS IOC """
+
+        ########################################################################
+        ## IOC config from ioc-instance.env in services/ioc_name/values.yaml
+        ########################################################################
+
+        self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
+        """ address of the real RTEMS IOC  hardware """
+
+        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
+        """ address:port to connect to the IOC console """
+
+        ########################################################################
+        ## IOC config with defaults supplied by the helm chart
+        ########################################################################
+
+        self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
+        """ the lowercase name of this IOC """
+
+        self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
+        """ the name of the repository that this IOC is grouped into """
+
+        ########################################################################
+        ## IOC config with defaults supplied here
+        ########################################################################
+
+        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "/ioc_nfs/st.cmd")
+        """ override for the EPICS startup script """
+
+        self.RTEMS_EPICS_BINARY = os.getenv(
+            "RTEMS_EPICS_BINARY",
+            f"/iocs/{self.IOC_NAME.lower()}/{self.RTEMS_BINARY_DEFAULT_NAME}",
+        )
+        """ override for the EPICS binary TFTP path """
+
+        ########################################################################
+        ## The remaining values relate to IOCs built inside containers
+        ########################################################################
+
         self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
         """Root of epics directory tree"""
 
@@ -26,50 +97,10 @@ class _Globals:
         self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", DEFAULT_ARCH)
         """ Cross compilation target architecture """
 
-        self.IOC = Path(os.getenv("IOC", self.EPICS_ROOT / "ioc"))
+        self.IOC_ORIGINAL_LOCATION = Path(
+            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
+        )
         """ The root folder for IOC source and binaries """
-
-        # TODO in future, shall we drop the RTEMS prefix and make this module
-        # generic?
-
-        self.RTEMS_TFTP_PATH = Path(os.getenv("RTEMS_TFTP_PATH", "/nfsv2-tftp"))
-        """ root folder of a mounted PVC in which to place IOC binaries """
-
-        self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
-        """ address of the real RTEMS IOC  hardware """
-
-        self.RTEMS_IOC_GATEWAY = os.getenv("RTEMS_IOC_GATEWAY")
-        """ gateway address for the RTEMS IOC hardware """
-
-        self.RTEMS_IOC_NETMASK = os.getenv("RTEMS_IOC_NETMASK")
-        """ netmask for the real RTEMS IOC hardware """
-
-        self.RTEMS_NFS_IP = os.getenv("RTEMS_NFS_IP")
-        """ address of an NFS server that the RTEMS IOC can access """
-
-        self.RTEMS_TFTP_IP = os.getenv("RTEMS_TFTP_IP")
-        """ address of a TFTP server that the RTEMS IOC can access """
-
-        self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
-        """ address:port to connect to the IOC console """
-
-        self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
-        """ the name of this IOC """
-
-        self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
-        """ the name of the repository that this IOC is grouped into """
-
-        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT")
-        """ override for the EPICS startup script """
-
-        self.RTEMS_EPICS_BINARY = os.getenv("RTEMS_EPICS_BINARY")
-        """ override for the EPICS binary """
-
-        self.RTEMS_EPICS_NTP_SERVER = os.getenv("RTEMS_EPICS_NTP_SERVER")
-        """ ip address for the ntp server """
-
-        self.RTEMS_EPICS_NFS_MOUNT = os.getenv("RTEMS_EPICS_NFS_MOUNT")
-        """ NFS mount point for the EPICS IOC """
 
 
 GLOBALS = _Globals()
