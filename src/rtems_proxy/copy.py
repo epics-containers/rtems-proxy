@@ -69,7 +69,6 @@ def copy_rtems(debug: bool = False):
     subprocess.run(
         [
             "rsync",
-            "--delete",
             "/bin/RTEMS-beatnik/{ioc_bin}",
             f"{local_tftp_root}",
         ],
