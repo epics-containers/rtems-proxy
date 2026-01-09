@@ -30,6 +30,13 @@ def copy_rtems(debug: bool = False):
 
     local_tftp_root = GLOBALS.RTEMS_TFTP_PATH
     nfs_root = f"{GLOBALS.RTEMS_NFS_ROOT_PATH}/{GLOBALS.IOC_NAME.lower()}"
+    sts = list(Path(GLOBALS.IOC_ORIGINAL_LOCATION).glob("bin/RTEMS-beatnik/st*"))
+    if len(sts) == 0:
+        raise FileNotFoundError(
+            f"No RTEMS startup script found at "
+            f"{GLOBALS.IOC_ORIGINAL_LOCATION}/bin/RTEMS-beatnik/st*"
+        )
+    ioc_script_name = sts[0].name
 
     # copy the IOC runtime files to the NFS root
     os.chdir(GLOBALS.IOC_ORIGINAL_LOCATION)
@@ -41,17 +48,16 @@ def copy_rtems(debug: bool = False):
             "data",
             "db",
             "dbd",
-            "bin/RTEMS-beatnik/st*",
+            f"bin/RTEMS-beatnik/{ioc_script_name}",
             f"{nfs_root}",
         ],
         check=True,
     )
 
     # symlink the ioc start to a fixed name 'st.cmd'
-    ioc_script_current = next(Path.cwd().glob("bin/RTEMS-beatnik/st*"))
     ioc_script_path = Path(nfs_root) / GLOBALS.RTEMS_SCRIPT_DEFAULT_NAME
     ioc_script_path.unlink(missing_ok=True)
-    ioc_script_path.symlink_to(ioc_script_current)
+    ioc_script_path.symlink_to(Path(nfs_root) / ioc_script_name)
 
     # TODO for container built IOCs the name will be ioc or ioc.boot
     if debug:
