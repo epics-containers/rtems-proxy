@@ -5,6 +5,7 @@ FROM ghcr.io/diamondlightsource/ubuntu-devcontainer:noble AS developer
 # Add any system dependencies for the developer/build environment here
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     rsync \
+    telnet \
     && apt-get dist-clean
 
 # The build stage installs the context into the venv
