@@ -78,7 +78,6 @@ class TelnetRTEMS:
             logfile=sys.stdout,
             echo=False,
             codec_errors="ignore",
-            maxread=20,  # low maxread helps to keep output flowing
         )
         try:
             # first check for connection refusal
