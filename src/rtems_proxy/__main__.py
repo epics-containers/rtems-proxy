@@ -188,6 +188,8 @@ def configure(
         config.apply_settings()
     else:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
+
+        config = Configure(None, debug=debug)
         telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
         config = Configure(telnet, debug=debug, dry_run=dry_run)
         config.apply_settings()

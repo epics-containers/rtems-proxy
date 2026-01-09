@@ -12,7 +12,7 @@ class _Globals:
     """Helper class for accessing global constants."""
 
     def __init__(self) -> None:
-        self.RTEMS_BINARY_DEFAULT_NAME = "rtems.ioc.boot"
+        self.RTEMS_BINARY_DEFAULT_NAME = "rtems.ioc.bin"
         self.RTEMS_SCRIPT_DEFAULT_NAME = "st.cmd"
 
         self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
