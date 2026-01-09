@@ -13,23 +13,16 @@ def copy_rtems(debug: bool = False):
     """
     Copy RTEMS IOC binary and startup assets to a location where the RTEMS IOC
     can access them
-
-    IMPORTANT: local_root and nfs_root are different perspectives on the same
-               folder.
-    nfs_root:   where the IOC files will be found from the perspective of a
-                a client to the NFSv2 service. i.e. where the RTEMS crate
-                will look for them using NFS.
-    local_tftp_root:
-                where the tftp_root folder is mounted into this rtems-proxy
-                container. This is needed to copy the .boot files into place.
     """
 
     # TODO - this function is currently specific to legacy built IOCs
     # TODO - once IOCs are built in containers review this function to make it
     # TODO   work for both legacy and container built IOCs (it might just work?)
 
+    # these represent where the rtems-proxy container mounts the IOC NFS and TFTP
+    # shares
     local_tftp_root = GLOBALS.RTEMS_TFTP_ROOT_PATH
-    nfs_root = f"{GLOBALS.RTEMS_NFS_ROOT_PATH}/{GLOBALS.IOC_NAME.lower()}"
+    local_nfs_root = f"{GLOBALS.RTEMS_NFS_ROOT_PATH}"
 
     sts = list(Path(GLOBALS.IOC_ORIGINAL_LOCATION).glob("bin/RTEMS-beatnik/st*"))
     if len(sts) == 0:
@@ -50,15 +43,15 @@ def copy_rtems(debug: bool = False):
             "db",
             "dbd",
             f"bin/RTEMS-beatnik/{ioc_script_name}",
-            f"{nfs_root}",
+            f"{local_nfs_root}",
         ],
         check=True,
     )
 
     # symlink the ioc start to a fixed name 'st.cmd'
-    ioc_script_path = Path(nfs_root) / GLOBALS.RTEMS_SCRIPT_DEFAULT_NAME
+    ioc_script_path = Path(local_nfs_root) / GLOBALS.RTEMS_SCRIPT_DEFAULT_NAME
     ioc_script_path.unlink(missing_ok=True)
-    ioc_script_path.symlink_to(Path(nfs_root) / ioc_script_name)
+    ioc_script_path.symlink_to(Path(local_nfs_root) / ioc_script_name)
 
     # TODO for container built IOCs the name will be ioc or ioc.boot
     if debug:
