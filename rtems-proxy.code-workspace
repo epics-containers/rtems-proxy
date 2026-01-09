@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../i04-services"
+		},
+		{
+			"path": "../rf-services"
 		}
 	],
 	"settings": {}

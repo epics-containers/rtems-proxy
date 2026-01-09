@@ -9,7 +9,7 @@ from .utils import run_command
 
 IP = re.compile(r"Stack Trace:\n *IP: *(0x[0-9a-f]*)")
 STACK = re.compile(r"--\^ (0x[0-9a-f]*)")
-symbols = GLOBALS.IOC / "bin" / "RTEMS-beatnik" / "ioc"
+symbols = GLOBALS.IOC_ORIGINAL_LOCATION / "bin" / "RTEMS-beatnik" / "ioc"
 
 
 def parse_stack_trace(trace: str):

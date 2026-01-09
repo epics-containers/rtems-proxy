@@ -12,6 +12,8 @@ class _Globals:
     """Helper class for accessing global constants."""
 
     def __init__(self) -> None:
+        self.RTEMS_BINARY_DEFAULT_NAME = "rtems.ioc.boot"
+
         self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
         """Root of epics directory tree"""
 
@@ -26,13 +28,15 @@ class _Globals:
         self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", DEFAULT_ARCH)
         """ Cross compilation target architecture """
 
-        self.IOC = Path(os.getenv("IOC", self.EPICS_ROOT / "ioc"))
+        self.IOC_ORIGINAL_LOCATION = Path(
+            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
+        )
         """ The root folder for IOC source and binaries """
 
-        # TODO in future, shall we drop the RTEMS prefix and make this module
-        # generic?
-
         self.RTEMS_TFTP_PATH = Path(os.getenv("RTEMS_TFTP_PATH", "/nfsv2-tftp"))
+        """ root folder of a mounted PVC in which to place IOC binaries """
+
+        self.RTEMS_NFS_ROOT_PATH = Path(os.getenv("RTEMS_NFS_ROOT_PATH", "/tmp"))
         """ root folder of a mounted PVC in which to place IOC binaries """
 
         self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
@@ -59,11 +63,16 @@ class _Globals:
         self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
         """ the name of the repository that this IOC is grouped into """
 
-        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT")
+        self.RTEMS_EPICS_SCRIPT = os.getenv(
+            "RTEMS_EPICS_SCRIPT", "/epics/runtime/st.cmd"
+        )
         """ override for the EPICS startup script """
 
-        self.RTEMS_EPICS_BINARY = os.getenv("RTEMS_EPICS_BINARY")
-        """ override for the EPICS binary """
+        self.RTEMS_EPICS_BINARY = os.getenv(
+            "RTEMS_EPICS_BINARY",
+            f"/iocs/{self.IOC_NAME.lower()}/{self.RTEMS_BINARY_DEFAULT_NAME}",
+        )
+        """ override for the EPICS binary TFTP path """
 
         self.RTEMS_EPICS_NTP_SERVER = os.getenv("RTEMS_EPICS_NTP_SERVER")
         """ ip address for the ntp server """
