@@ -28,12 +28,12 @@ class Configure:
         assert self.telnet is not None, (
             "Telnet connection is required to apply settings"
         )
-        self.telnet.send(f"gevE {variable}")
+        self.telnet.sendline(f"gevE {variable}")
         self.telnet.expect(r"\(Blank line terminates input.\)")
-        self.telnet.send(value or "" + "\r")
-        self.telnet.send("\r")
+        self.telnet.sendline(value or "")
+        self.telnet.sendline("")
         self.telnet.expect(r"\?")
-        self.telnet.send("Y\r")
+        self.telnet.sendline("Y")
 
     def apply_settings(self):
         if not self.dry_run:
