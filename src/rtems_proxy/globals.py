@@ -34,11 +34,12 @@ class _Globals:
         )
         """ The root folder for IOC source and binaries """
 
-        self.RTEMS_TFTP_PATH = Path(os.getenv("RTEMS_TFTP_PATH", "/nfsv2-tftp"))
+        self.RTEMS_TFTP_ROOT_PATH = Path(os.getenv("RTEMS_TFTP_PATH", "/ioc_tftp"))
         """ root folder of a mounted PVC in which to place IOC binaries """
 
-        self.RTEMS_NFS_ROOT_PATH = Path(os.getenv("RTEMS_NFS_ROOT_PATH", "/tmp"))
-        """ root folder of a mounted PVC in which to place IOC binaries """
+        self.RTEMS_NFS_ROOT_PATH = Path(os.getenv("RTEMS_NFS_ROOT_PATH", "/ioc_nfs"))
+        """ root folder of a mounted NFS folder in which to place IOC binaries """
+        # at DLS this is will be from /dls_sw/ixx/epics/rtems/ioc_name_lowercase
 
         self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
         """ address of the real RTEMS IOC  hardware """

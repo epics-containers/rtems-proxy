@@ -63,9 +63,10 @@ class Configure:
         )
 
         if GLOBALS.RTEMS_EPICS_NFS_MOUNT:
-            nfs_root = f"{GLOBALS.RTEMS_EPICS_NFS_MOUNT}/{GLOBALS.IOC_NAME.lower()}"
+            nfs_root = ""
+            nfs_mount = f"{nfs_root}:{nfs_root}"
         else:
-            nfs_root = None
+            nfs_mount = None
 
         self.apply_nvm("mot-/dev/enet0-cipa", GLOBALS.RTEMS_IOC_IP)
         self.apply_nvm("mot-/dev/enet0-snma", GLOBALS.RTEMS_IOC_NETMASK)
@@ -75,8 +76,8 @@ class Configure:
         self.apply_nvm("mot-script-boot", mot_boot)
         self.apply_nvm("rtems-client-name", GLOBALS.IOC_NAME)
         self.apply_nvm("epics-script", GLOBALS.RTEMS_EPICS_SCRIPT)
-        if nfs_root:
-            self.apply_nvm("epics-nfsmount", nfs_root)
+        if nfs_mount:
+            self.apply_nvm("epics-nfsmount", nfs_mount)
 
         if GLOBALS.RTEMS_EPICS_NTP_SERVER:
             self.apply_nvm("epics-ntpserver", GLOBALS.RTEMS_EPICS_NTP_SERVER)

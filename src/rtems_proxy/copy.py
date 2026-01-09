@@ -28,8 +28,9 @@ def copy_rtems(debug: bool = False):
     # TODO - once IOCs are built in containers review this function to make it
     # TODO   work for both legacy and container built IOCs (it might just work?)
 
-    local_tftp_root = GLOBALS.RTEMS_TFTP_PATH
+    local_tftp_root = GLOBALS.RTEMS_TFTP_ROOT_PATH
     nfs_root = f"{GLOBALS.RTEMS_NFS_ROOT_PATH}/{GLOBALS.IOC_NAME.lower()}"
+
     sts = list(Path(GLOBALS.IOC_ORIGINAL_LOCATION).glob("bin/RTEMS-beatnik/st*"))
     if len(sts) == 0:
         raise FileNotFoundError(
