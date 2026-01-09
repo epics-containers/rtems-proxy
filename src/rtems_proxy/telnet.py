@@ -181,12 +181,12 @@ class TelnetRTEMS:
 
         report("press enter for bootloader prompt")
 
-    def sendline(self, command: str) -> None:
+    def send(self, command: str) -> None:
         """
         Send a command to the telnet session
         """
         assert self._child, "must call connect before send"
-        self._child.sendline(command)
+        self._child.send(command)
 
     def expect(self, pattern, timeout=10) -> None:
         """
@@ -244,7 +244,7 @@ def ioc_connect(
 
         # this will untangle a partially executed gevEdit command
         for _ in range(3):
-            telnet.sendline("\r")
+            telnet.send("\r")
 
         if reboot:
             telnet.get_epics_prompt(retries=10)
@@ -283,7 +283,7 @@ def motboot_connect(
 
     # this will untangle a partially executed gevEdit command
     for _ in range(3):
-        telnet.sendline("\r")
+        telnet.send("\r")
 
     telnet.get_boot_prompt()
 
