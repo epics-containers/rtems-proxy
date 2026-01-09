@@ -13,6 +13,7 @@ class _Globals:
 
     def __init__(self) -> None:
         self.RTEMS_BINARY_DEFAULT_NAME = "rtems.ioc.boot"
+        self.RTEMS_SCRIPT_DEFAULT_NAME = "st.cmd"
 
         self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
         """Root of epics directory tree"""
