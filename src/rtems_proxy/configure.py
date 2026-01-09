@@ -80,8 +80,9 @@ class Configure:
         if GLOBALS.RTEMS_EPICS_NFS_MOUNT:
             self.apply_nvm(
                 "epics-nfsmount",
-                f"{GLOBALS.RTEMS_NFS_IP}:{GLOBALS.RTEMS_EPICS_NFS_MOUNT}/"
-                f"{GLOBALS.IOC_NAME.lower()}",
+                f"{GLOBALS.RTEMS_NFS_IP}:"
+                f"{GLOBALS.RTEMS_EPICS_NFS_MOUNT}/{GLOBALS.IOC_NAME.lower()}:"
+                f"{GLOBALS.RTEMS_NFS_ROOT_PATH}",
             )
 
         if GLOBALS.RTEMS_EPICS_NTP_SERVER:
