@@ -65,7 +65,7 @@ class _Globals:
         self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
         """ the name of the repository that this IOC is grouped into """
 
-        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "")
+        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "/ioc_nfs/st.cmd")
         """ override for the EPICS startup script """
 
         self.RTEMS_EPICS_BINARY = os.getenv(
