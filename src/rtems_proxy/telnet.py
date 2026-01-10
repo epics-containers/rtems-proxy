@@ -186,9 +186,8 @@ class TelnetRTEMS:
         Send a command to the telnet session
         """
         # always pause a little to allow the previous expect to complete
-        sleep(0.1)
         assert self._child, "must call connect before send"
-        self._child.sendline(command)
+        self._child.sendline(command + "\r")
 
     def expect(self, pattern, timeout=10) -> None:
         """
