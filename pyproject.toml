@@ -16,7 +16,7 @@ dependencies = [
     "jinja2",
     "pexpect",
     "ruamel.yaml",
-    "stdio-socket>=1.3.1",
+    "stdio-socket>=1.4.0b2",
     "telnetlib3",
     "typer",
 ]
@@ -52,7 +52,7 @@ version_file = "src/rtems_proxy/_version.py"
 
 [tool.pyright]
 typeCheckingMode = "standard"
-reportMissingImports = false # Ignore missing stubs in imported modules
+reportMissingImports = false  # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error

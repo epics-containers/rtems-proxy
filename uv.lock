@@ -762,7 +762,7 @@ requires-dist = [
     { name = "jinja2" },
     { name = "pexpect" },
     { name = "ruamel-yaml" },
-    { name = "stdio-socket", specifier = ">=1.3.1" },
+    { name = "stdio-socket", specifier = ">=1.4.0b2" },
     { name = "telnetlib3" },
     { name = "typer" },
 ]
@@ -825,14 +825,14 @@ wheels = [
 
 [[package]]
 name = "stdio-socket"
-version = "1.3.1"
+version = "1.4.0b2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/6c/288d8095c4bebeb34fda8d573c6e25ddd973541cce2264d87229372ad305/stdio_socket-1.3.1.tar.gz", hash = "sha256:aebd682c345eeccec4715ac8546f27859212d8cfd6ab971b76b1e36594ba93bb", size = 26314, upload-time = "2025-09-12T11:59:57.245Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/9a/b545b2a57aa5b9979eb921cd6f573411a15b742a897ee885c5d1979bda82/stdio_socket-1.4.0b2.tar.gz", hash = "sha256:f5b3077f64b7f479867419bdc27ccfcdefa8f5fcc1cb2b32db2684929d375121", size = 74730, upload-time = "2026-01-10T18:59:27.285Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/72/ad2e96e2469ee040fb5f5f97ca2f45d11352add139eaa992fa8da5f282e0/stdio_socket-1.3.1-py3-none-any.whl", hash = "sha256:30a1465d71d44e4ebf8e571179935364253ef2aec931ea4c41c00e4f77e50367", size = 15690, upload-time = "2025-09-12T11:59:56.422Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/02/bd7e934e6a48d9e3f54c64444fa13c2d56d4de0cf1f6da5cdfe814004aee/stdio_socket-1.4.0b2-py3-none-any.whl", hash = "sha256:ab7acbb92392931cd87be9cd5d45aecb11179ecdb7fa3e392893784ecec81c7a", size = 16245, upload-time = "2026-01-10T18:59:26.016Z" },
 ]
 
 [[package]]
