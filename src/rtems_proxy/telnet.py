@@ -103,23 +103,32 @@ class TelnetRTEMS:
                 self._child.sendline(self.IOC_CHECK)
                 self._child.expect(self.IOC_RESPONSE, timeout=1)
             except pexpect.exceptions.TIMEOUT:
-                try:
-                    # see if we are in the bootloader
-                    self._child.sendline()
-                    self._child.expect(self.MOT_PROMPT, timeout=1)
-                except pexpect.exceptions.TIMEOUT:
-                    # current state unknown. wait and retry
-                    sleep(timeout)
-                else:
-                    report("Currently in bootloader")
-                    return RtemsState.MOT
+                pass
             else:
-                report("Currently in IOC shell")
                 return RtemsState.IOC
+
+            try:
+                # see if we are in the bootloader
+                self._child.sendline()
+                self._child.expect(self.MOT_PROMPT, timeout=1)
+            except pexpect.exceptions.TIMEOUT:
+                pass
+            else:
+                return RtemsState.MOT
+
+            try:
+                # current state unknown. check for mot start prompt
+                # in case we are in a boot loop
+                self._child.expect(self.CONTINUE, timeout=timeout)
+            except pexpect.exceptions.TIMEOUT:
+                pass
+            else:
+                # send escape to get into the bootloader
+                self._child.sendline(chr(27))
+                return RtemsState.MOT
 
             report(f"Retry {retry + 1} of get current status")
 
-        report("Current state UNKNOWN")
         return RtemsState.UNKNOWN
 
     def reboot(self, into: RtemsState):
