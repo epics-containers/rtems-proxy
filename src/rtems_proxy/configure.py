@@ -36,7 +36,7 @@ class Configure:
             self.telnet.sendline(f"gevE {variable}")
             self.telnet.expect(r"\(Blank line terminates input.\)")
             self.telnet.sendline(value)
-            self.telnet.sendline("\r")
+            self.telnet.sendline("\n")
             self.telnet.expect(r"\?")
             self.telnet.sendline("Y")
 
