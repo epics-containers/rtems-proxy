@@ -1,3 +1,5 @@
+from time import sleep
+
 import pexpect
 
 from .configure import Configure
@@ -51,6 +53,7 @@ def ioc_connect(
             if configure:
                 report("Rebooting to configure motBoot settings")
                 telnet.get_boot_prompt(retries=10)
+                sleep(1)
                 cfg = Configure(telnet)
                 cfg.apply_settings()
             else:
