@@ -76,6 +76,7 @@ class TelnetRTEMS:
             logfile=sys.stdout,
             echo=False,
             codec_errors="ignore",
+            timeout=5,
         )
         try:
             # first check for connection refusal
@@ -184,6 +185,8 @@ class TelnetRTEMS:
         """
         Send a command to the telnet session
         """
+        # always pause a little to allow the previous expect to complete
+        sleep(0.1)
         assert self._child, "must call connect before send"
         self._child.sendline(command)
 
