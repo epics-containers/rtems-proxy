@@ -52,6 +52,9 @@ def start(
     reboot: bool = typer.Option(
         True, "--reboot/--no-reboot", help="reboot the IOC first"
     ),
+    configure: bool = typer.Option(
+        True, "--configure/--no-configure", help="configure motBoot when rebooting"
+    ),
     raise_errors: bool = typer.Option(
         True, "--raise-errors/--no-raise-errors", help="raise errors instead of exiting"
     ),
@@ -81,7 +84,11 @@ def start(
     if connect:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
         ioc_connect(
-            GLOBALS.RTEMS_CONSOLE, reboot=reboot, attach=True, raise_errors=raise_errors
+            GLOBALS.RTEMS_CONSOLE,
+            reboot=reboot,
+            attach=True,
+            raise_errors=raise_errors,
+            configure=configure,
         )
     else:
         report("IOC console connection disabled. ")
@@ -189,9 +196,8 @@ def configure(
     else:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
 
-        config = Configure(None, debug=debug)
         telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
-        config = Configure(telnet, debug=debug, dry_run=dry_run)
+        config = Configure(telnet, debug=debug, dry_run=False)
         config.apply_settings()
         telnet.close()
         if attach:

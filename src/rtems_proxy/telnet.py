@@ -5,6 +5,8 @@ from time import sleep
 
 import pexpect
 
+from rtems_proxy.configure import Configure
+
 from .utils import run_command
 
 
@@ -145,7 +147,7 @@ class TelnetRTEMS:
             # send space to boot the IOC
             self._child.send(" ")
 
-    def get_epics_prompt(self, retries=5):
+    def get_epics_prompt(self, retries=5, configure=True):
         """
         Get to the IOC shell prompt, if the IOC is not already running, reboot
         it into the IOC shell. If the IOC is running, do a reboot only if
@@ -153,23 +155,28 @@ class TelnetRTEMS:
         """
         assert self._child, "must call connect before get_epics_prompt"
 
-        current = self.check_prompt(retries=10)
+        current = self.check_prompt(retries=retries)
 
         if current != RtemsState.IOC or (self._ioc_reboot and not self.ioc_rebooted):
             sleep(0.5)
-            report("Rebooting the IOC")
 
+            if configure:
+                report("Rebooting to configure motBoot settings")
+                self.get_boot_prompt()
+                cfg = Configure(self)
+                cfg.apply_settings()
+
+            report("Rebooting into IOC shell")
             self.reboot(RtemsState.IOC)
             self.ioc_rebooted = True
 
-            current = self.check_prompt(retries=10)
+            current = self.check_prompt(retries=retries)
             if current != RtemsState.IOC:
                 raise CannotConnectError("Failed to reboot into IOC shell")
 
     def get_boot_prompt(self):
         """
-        Get to the bootloader prompt, if the IOC shell is running then exit
-        and send appropriate commands to get to the bootloader
+        Connect to telnet and get to the bootloader prompt
         """
         assert self._child, "must call connect before get_boot_prompt"
 
@@ -226,6 +233,7 @@ def report(message):
 def ioc_connect(
     host_and_port: str,
     reboot: bool = False,
+    configure: bool = True,
     attach: bool = True,
     raise_errors: bool = False,
 ):
@@ -247,7 +255,7 @@ def ioc_connect(
             telnet.sendline("\r")
 
         if reboot:
-            telnet.get_epics_prompt(retries=10)
+            telnet.get_epics_prompt(retries=10, configure=configure)
         else:
             report("Auto reboot disabled. Skipping reboot")
 
