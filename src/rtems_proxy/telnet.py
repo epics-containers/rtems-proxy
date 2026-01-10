@@ -7,8 +7,6 @@ import pexpect
 
 from rtems_proxy.configure import Configure
 
-from .utils import run_command
-
 
 class CannotConnectError(Exception):
     pass
@@ -176,7 +174,8 @@ class TelnetRTEMS:
 
     def get_boot_prompt(self):
         """
-        Connect to telnet and get to the bootloader prompt
+        Get to the bootloader prompt, if the IOC shell is running then exit
+        and send appropriate commands to get to the bootloader
         """
         assert self._child, "must call connect before get_boot_prompt"
 
@@ -228,71 +227,3 @@ def report(message):
     print a message that is noticeable amongst all the other output
     """
     print(f"\n>>>> {message} <<<<\n")
-
-
-def ioc_connect(
-    host_and_port: str,
-    reboot: bool = False,
-    configure: bool = True,
-    attach: bool = True,
-    raise_errors: bool = False,
-):
-    """
-    Entrypoint to make a connection to an RTEMS IOC over telnet.
-    Once connected, enters an interactive user session with the IOC.
-
-    args:
-    host_and_port: 'hostname:port' of the IOC to connect to
-    reboot: reboot the IOC to pick up new binaries/startup/epics db
-    """
-    telnet = TelnetRTEMS(host_and_port, reboot)
-
-    try:
-        telnet.connect()
-
-        # this will untangle a partially executed gevEdit command
-        for _ in range(3):
-            telnet.sendline("\r")
-
-        if reboot:
-            telnet.get_epics_prompt(retries=10, configure=configure)
-        else:
-            report("Auto reboot disabled. Skipping reboot")
-
-    except (CannotConnectError, pexpect.exceptions.TIMEOUT):
-        report("Connection failed, Exiting.")
-        telnet.close()
-        raise
-
-    except Exception as e:
-        # flush any remaining buffered output to stdout
-        telnet.flush_remaining_output()
-        report(f"An error occurred: {e}")
-        telnet.close()
-        if raise_errors:
-            raise
-
-    telnet.close()
-    if attach:
-        report("Connecting to IOC console, hit enter for a prompt")
-        run_command(telnet.command)
-
-
-def motboot_connect(
-    host_and_port: str, reboot: bool = False, use_console: bool = False
-) -> TelnetRTEMS:
-    """
-    Connect to the MOTBoot bootloader prompt, rebooting if needed.
-
-    Returns a TelnetRTEMS object that is connected to the MOTBoot bootloader
-    """
-    telnet = TelnetRTEMS(host_and_port, ioc_reboot=reboot, use_console=use_console)
-    telnet.connect()
-
-    # this will untangle a partially executed gevEdit command
-    for _ in range(3):
-        telnet.sendline("\r")
-
-    telnet.get_boot_prompt()
-
-    return telnet

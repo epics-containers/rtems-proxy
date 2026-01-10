@@ -11,9 +11,9 @@ from rtems_proxy.utils import run_command
 
 from . import __version__
 from .configure import Configure
+from .connect import ioc_connect, motboot_connect, report
 from .copy import copy_rtems
 from .globals import GLOBALS
-from .telnet import ioc_connect, motboot_connect, report
 
 __all__ = ["main"]
 
