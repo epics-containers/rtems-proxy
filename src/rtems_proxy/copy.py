@@ -18,7 +18,7 @@ def save_current_version():
     """
     version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
     with open(version_file, "w") as vf:
-        vf.write(str(GLOBALS.IOC_ORIGINAL_LOCATION))
+        vf.write(str(GLOBALS.IOC_ORIGINAL_LOCATION) + "\n")
 
 
 def check_new_version():

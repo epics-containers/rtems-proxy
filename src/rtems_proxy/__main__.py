@@ -83,7 +83,9 @@ def start(
         copy_rtems()
 
     # always reboot if the IOC definition has changed
-    reboot = reboot or check_new_version()
+    if check_new_version():
+        report("IOC definition has changed, forcing reboot to pick up changes")
+        reboot = True
 
     if connect:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
