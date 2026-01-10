@@ -5,8 +5,6 @@ A few global definitions
 import os
 from pathlib import Path
 
-DEFAULT_ARCH = "linux-x86_64"
-
 
 class _Globals:
     """Helper class for accessing global constants."""
@@ -23,6 +21,24 @@ class _Globals:
         """ root folder of a mounted PVC in which to place IOC binaries """
         self.RTEMS_NFS_ROOT_PATH = Path("/ioc_nfs")
         """ root folder of a mounted NFS folder in which to place IOC runtime files """
+
+        ########################################################################
+        ## Values relating to IOCs built inside containers using ioc-template
+        ########################################################################
+
+        self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
+        """Root of epics directory tree"""
+
+        self.SUPPORT = Path(os.getenv("SUPPORT", self.EPICS_ROOT / "support"))
+        """ The root folder for support modules """
+
+        self.RUNTIME = self.EPICS_ROOT / "runtime"
+
+        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH", "linux-x86_64")
+        """ Host architecture """
+
+        self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", "RTEMS-beatnik")
+        """ Cross compilation target architecture """
 
         ########################################################################
         ## Beamline level config from global.env in services/values.yaml
@@ -47,7 +63,9 @@ class _Globals:
         """ NFS mount point for the EPICS IOC """
 
         ########################################################################
-        ## IOC config from ioc-instance.env in services/ioc_name/values.yaml
+        ## IOC instance config from ioc-instance.env in
+        ## services/ioc_name/values.yaml
+        ## these MUST be set for each RTEMS IOC instance
         ########################################################################
 
         self.RTEMS_IOC_IP = os.getenv("RTEMS_IOC_IP")
@@ -56,51 +74,29 @@ class _Globals:
         self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
         """ address:port to connect to the IOC console """
 
+        self.IOC_ORIGINAL_LOCATION = Path(
+            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
+        )
+        """ The root folder to get IOC source and binaries from
+            for legacy built IOCs, set to an IOC folder in prod or work
+            for in-container (ibek) built IOCs /epics/ioc is the default
+        """
+
         ########################################################################
-        ## IOC config with defaults supplied by the helm chart
+        ## IOC instance config (defaults are normally sufficient)
         ########################################################################
 
         self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
-        """ the lowercase name of this IOC """
-
-        self.IOC_GROUP = os.getenv("IOC_GROUP", "NO_IOC_GROUP")
-        """ the name of the repository that this IOC is grouped into """
-
-        ########################################################################
-        ## IOC config with defaults supplied here
-        ########################################################################
+        """ the lowercase name of this IOC (derived from the instance folder name) """
 
         self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "/ioc_nfs/st.cmd")
-        """ override for the EPICS startup script """
+        """ override for the standard EPICS startup script filename """
 
         self.RTEMS_EPICS_BINARY = os.getenv(
             "RTEMS_EPICS_BINARY",
             f"/iocs/{self.IOC_NAME.lower()}/{self.RTEMS_BINARY_DEFAULT_NAME}",
         )
-        """ override for the EPICS binary TFTP path """
-
-        self.IOC_ORIGINAL_LOCATION = Path(
-            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
-        )
-        """ The root folder to get IOC source and binaries from """
-
-        ########################################################################
-        ## The remaining values relate to IOCs built inside containers
-        ########################################################################
-
-        self.EPICS_ROOT = Path(os.getenv("EPICS_ROOT", "/epics/"))
-        """Root of epics directory tree"""
-
-        self.SUPPORT = Path(os.getenv("SUPPORT", self.EPICS_ROOT / "support"))
-        """ The root folder for support modules """
-
-        self.RUNTIME = self.EPICS_ROOT / "runtime"
-
-        self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH", DEFAULT_ARCH)
-        """ Host architecture """
-
-        self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", DEFAULT_ARCH)
-        """ Cross compilation target architecture """
+        """ override for the standard EPICS RTEMS binary TFTP file path """
 
 
 GLOBALS = _Globals()
