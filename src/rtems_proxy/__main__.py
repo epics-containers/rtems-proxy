@@ -12,7 +12,7 @@ from rtems_proxy.utils import run_command
 from . import __version__
 from .configure import Configure
 from .connect import ioc_connect, motboot_connect, report
-from .copy import copy_rtems
+from .copy import check_new_version, copy_rtems, save_current_version
 from .globals import GLOBALS
 
 __all__ = ["main"]
@@ -81,6 +81,10 @@ def start(
     )
     if copy:
         copy_rtems()
+
+    # always reboot if the IOC definition has changed
+    reboot = reboot or check_new_version()
+
     if connect:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
         ioc_connect(
@@ -90,6 +94,8 @@ def start(
             raise_errors=raise_errors,
             configure=configure,
         )
+        # now we have rebooted into the IOC we can save the current version
+        save_current_version()
     else:
         report("IOC console connection disabled. ")
 

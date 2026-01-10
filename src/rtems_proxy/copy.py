@@ -9,6 +9,35 @@ from pathlib import Path
 from .globals import GLOBALS
 
 
+def save_current_version():
+    """
+    Save the current version string to a file in the NFS root so that the IOC
+    can report its version on startup
+
+    We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
+    """
+    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    with open(version_file, "w") as vf:
+        vf.write(str(GLOBALS.IOC_ORIGINAL_LOCATION))
+
+
+def check_new_version():
+    """
+    Check if the version string saved in the NFS root matches the current
+    version string.
+
+    We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
+    """
+    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    if not version_file.exists():
+        return True
+
+    with open(version_file) as vf:
+        saved_version = vf.read().strip()
+
+    return saved_version != str(GLOBALS.IOC_ORIGINAL_LOCATION)
+
+
 def copy_rtems(debug: bool = False):
     """
     Copy RTEMS IOC binary and startup assets to a location where the RTEMS IOC
