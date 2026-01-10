@@ -79,6 +79,11 @@ class _Globals:
         )
         """ override for the EPICS binary TFTP path """
 
+        self.IOC_ORIGINAL_LOCATION = Path(
+            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
+        )
+        """ The root folder to get IOC source and binaries from """
+
         ########################################################################
         ## The remaining values relate to IOCs built inside containers
         ########################################################################
@@ -96,11 +101,6 @@ class _Globals:
 
         self.EPICS_TARGET_ARCH = os.getenv("EPICS_TARGET_ARCH", DEFAULT_ARCH)
         """ Cross compilation target architecture """
-
-        self.IOC_ORIGINAL_LOCATION = Path(
-            os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
-        )
-        """ The root folder for IOC source and binaries """
 
 
 GLOBALS = _Globals()
