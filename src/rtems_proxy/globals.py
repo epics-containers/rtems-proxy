@@ -22,7 +22,7 @@ class _Globals:
         self.RTEMS_TFTP_ROOT_PATH = Path("/ioc_tftp")
         """ root folder of a mounted PVC in which to place IOC binaries """
         self.RTEMS_NFS_ROOT_PATH = Path("/ioc_nfs")
-        """ root folder of a mounted NFS folder in which to place IOC binaries """
+        """ root folder of a mounted NFS folder in which to place IOC runtime files """
 
         ########################################################################
         ## Beamline level config from global.env in services/values.yaml
