@@ -38,7 +38,7 @@ def ioc_connect(
         for _ in range(3):
             telnet.sendline("\r")
 
-        current = telnet.check_prompt(retries=5)
+        current = telnet.check_prompt(retries=5, timeout=1)
         match current:
             case RtemsState.MOT:
                 report("At MOTBoot prompt")

@@ -88,7 +88,7 @@ class TelnetRTEMS:
             report("Cannot connect to remote IOC, connection in use?")
             raise CannotConnectError
 
-    def check_prompt(self, retries) -> RtemsState:
+    def check_prompt(self, retries, timeout=15) -> RtemsState:
         """
         Determine if we are currently seeing an IOC shell prompt or
         bootloader. Because there is a possibility that we are in the middle
@@ -109,7 +109,7 @@ class TelnetRTEMS:
                     self._child.expect(self.MOT_PROMPT, timeout=1)
                 except pexpect.exceptions.TIMEOUT:
                     # current state unknown. wait and retry
-                    sleep(15)
+                    sleep(timeout)
                 else:
                     report("Currently in bootloader")
                     return RtemsState.MOT
@@ -120,7 +120,7 @@ class TelnetRTEMS:
             report(f"Retry {retry + 1} of get current status")
 
         report("Current state UNKNOWN")
-        raise CannotConnectError("Current state of remote IOC unknown")
+        return RtemsState.UNKNOWN
 
     def reboot(self, into: RtemsState):
         """
