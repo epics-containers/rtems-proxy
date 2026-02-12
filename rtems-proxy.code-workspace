@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "../i06-services"
+			"path": "../bl06i-mo-ioc-02"
 		},
 		{
-			"path": "../i04-services"
+			"path": "../bl00p-va-ioc-01"
 		}
 	],
 	"settings": {}
