@@ -41,6 +41,9 @@ COPY --from=build /python /python
 COPY --from=build /app/.venv /app/.venv
 ENV PATH=/app/.venv/bin:$PATH
 
+# Create directories for hybrid mode compatibility
+RUN mkdir -p /epics/ioc /epics/runtime /ioc_tftp /ioc_nfsv2
+
 # change this entrypoint if it is not the same as the repo
 ENTRYPOINT ["rtems-proxy"]
 CMD ["--version"]

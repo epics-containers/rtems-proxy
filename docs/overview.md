@@ -80,10 +80,9 @@ The changes required are:
 - rewrite the startup script to be compatible with RTEMS5
 - release to prod using `dls-release`
 - for more details on the porting process see:
-  - confluence: https://confluence.diamond.ac.uk/display/CNTRLS/RTEMS
+  - [confluence converting to RTEMS](https://confluence.diamond.ac.uk/x/_w6WFQ)
+  - [confluence general RTEMS info](https://confluence.diamond.ac.uk/x/s50AC)
   - slack channel: #rtems6
-  - Accelerator Team
-  - Pete Leciester
 
 Once you have a release you can deploy a proxy container to manage your RTEMS IOC. See the example proxy instance below.
 

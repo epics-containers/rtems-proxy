@@ -64,6 +64,17 @@
         {
             "target": "/workspaces/${localWorkspaceFolderBasename}/.venv",
             "type": "volume"
+        },
+        // mount in /dls_sw prod and work for testing hybrid mode
+        {
+            "source": "/dls_sw/prod",
+            "target": "/dls_sw/prod,ro",
+            "type": "bind"
+        },
+        {
+            "source": "/dls_sw/work",
+            "target": "/dls_sw/work,ro",
+            "type": "bind"
         }
     ],
     // Mount the parent as /workspaces so we can pip install peers as editable

@@ -1,13 +1,37 @@
 {
 	"folders": [
 		{
+			"name": "rtems-proxy",
 			"path": "."
 		},
 		{
+			"name": "bl06i-mo-ioc-02",
 			"path": "../bl06i-mo-ioc-02"
 		},
 		{
+			"name": "bl00p-va-ioc-01",
 			"path": "../bl00p-va-ioc-01"
+		},
+		{
+			"name": "i06-services",
+			"path": "../i06-services"
+		},
+		{
+			"name": "ibek",
+			"path": "../ibek"
+		},
+		{
+			"name": "ioc-generic",
+			"path": "../ioc-generic"
+		},
+		{
+			"path": "../../ioc_nfs"
+		},
+		{
+			"path": "../i04-services"
+		},
+		{
+			"path": "../../epics"
 		}
 	],
 	"settings": {}
