@@ -84,15 +84,15 @@ In this example we will generate a temporary ioc.yaml from the i04 vacuum IOC bu
 
 In a real example you would add the resulting `ioc.yaml` into your IOC instance definition in the target beamline's services repository.
 
+e.g.
 ```bash
-mkdir -p /tmp/bl04i-va-ioc-01/config
-uvx builder2ibek xml2yaml /dls_sw/work/R3.14.12.7/support/BL04I-BUILDER/etc/makeIocs/BL04I-VA-IOC-01.xml --yaml /tmp/bl04i-va-ioc-01/config/ioc.yaml
+uvx builder2ibek xml2yaml /dls_sw/work/R3.14.12.7/support/BL19I-BUILDER/etc/makeIocs/BL19I-VA-IOC-01.xml --yaml /workspaces/i19-services/services/bl19i-va-ioc-01/config/ioc.yaml
 ```
 
 Take a look at the generated `ioc.yaml` and check that it looks correct. It should have a list of support yaml files that are needed to generate the database files for this IOC.
 
 ```bash
-less /tmp/bl04i-va-ioc-01/config/ioc.yaml
+less /workspaces/i19-services/bl19i-va-ioc-01config/ioc.yaml
 ```
 
 # Step 4: Run Generic IOC with ibek
@@ -111,14 +111,14 @@ Here we will:
 
 ```bash
 # for the devcontainer this command links the config folder to /epics/ioc/config
-ibek dev instance /tmp/bl04i-va-ioc-01
+ibek dev instance /workspaces/i19-services/services/bl19i-va-ioc-01
 # expand the ioc.yaml into st.cmd and ioc.subst
-ibek runtime generate --no-pvi /epics/ioc/config/ioc.yaml ibek-support**/*/*.ibek.support.yaml
+ibek runtime generate --no-pvi /epics/ioc/config/ioc.yaml $IOC_ORIGINAL_LOCATION/ibek-support**/*/*.ibek.support.yaml
+rsync -r $IOC_ORIGINAL_LOCATION/data/ /ioc_nfs/
 
-
-includes= somehow we need to work -Ixxx/db -I/xxy/db etc. OR USE an env var if msi supports that
+includes=$(cat $IOC_ORIGINAL_LOCATION/data/msi.args)
 msi -o${RUNTIME_DIR}/ioc.db ${includes} -I${RUNTIME_DIR} -S${RUNTIME_DIR}/ioc.subst
-cp ${RUNTIME_DIR}/ioc.db /ioc_nfs/
+rsync ${RUNTIME_DIR}/ioc.db /ioc_nfs/
 # also need req files and protocol files?
 rtems-proxy start --no-connect
 ```
