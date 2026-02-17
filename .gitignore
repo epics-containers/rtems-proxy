@@ -69,3 +69,6 @@ venv*
 .ruff_cache/
 
 bl21i-pss-ioc-01.sh
+
+# vscode workspaces
+*.code-workspace

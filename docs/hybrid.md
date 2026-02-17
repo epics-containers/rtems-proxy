@@ -26,24 +26,34 @@ This method will use a Generic IOC shared between all beamlines for each class o
 
 To test the correct operation of the rtems proxy you can do this:
 
-- launch the devcontainer for rtems-proxy and then do one of the following:
+- launch the devcontainer for rtems-proxy and then try the following:
 
 ## Step 1 initial setup
 
-- Point at a built generic IOC that you have copied to a peer folder and set the IOC_NAME.
+- Point at a built generic IOC set the IOC_NAME.
 
 ```bash
-export IOC_NAME=BL06I-MO-IOC-02
-export IOC_ORIGINAL_LOCATION=/dls_sw/prod/R7.0.7/ioc/BL06I/BL06I-MO-IOC-02/8-2
+export IOC_NAME=BL06I-VA-IOC-01
+export IOC_ORIGINAL_LOCATION=/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01
 ```
 
-## Option 1: Run Generic IOC directly without ibek
+## Step 2: Run Generic IOC directly without ibek
+
+This is initial verification that the above settings from Step 1 are correct.
+
+Optionally, clean up the previous state of the target folders:
+
+```bash
+rm -rf /ioc_nfs/* /ioc_tftp/*
+```
+
+Then start the proxy without connecting to the target:
 
 ```bash
 rtems-proxy start --no-connect
 ```
 
-if this works then you should have your runtime assets in the correct places i.e.
+If this works then it will get no errors and copy your runtime assets in the correct places. Verify with:
 
 This command:
 ```bash
@@ -53,26 +63,59 @@ ls /ioc_*
 Should show:
 ```bash
 /ioc_nfs:
-data  db  dbd  st.cmd  stBL06I-MO-IOC-02.boot
+data  db  dbd  st.cmd  stBL06I-VA-IOC-01.boot
 
-/ioc_nfsv2:
+/ioc_nfs/data:
+BL06I_0.req  BL06I_1.req  BL06I_2.req
+
+/ioc_nfs/db:
+BL06I-VA-IOC-01.db
+
+/ioc_nfs/dbd:
+BL06I-VA-IOC-01.dbd
 
 /ioc_tftp:
 rtems.ioc.bin
 ```
 
-# Option 2: Run Generic IOC with ibek
+# Step 3: Generate an ioc.yaml
 
-Here we need an ioc.yaml file to generate the startup script and database files.
+In this example we will generate a temporary ioc.yaml from the i04 vacuum IOC builder XML file.
 
-- pick an ibek IOC to use and run ibek runtime generate to create all the runtime assets in `/epics/runtime`
-- generate the runtime assets with ibek
-- TODO: work out how to make a epics_db_path for msi
+In a real example you would add the resulting `ioc.yaml` into your IOC instance definition in the target beamline's services repository.
+
+```bash
+mkdir -p /tmp/bl04i-va-ioc-01/config
+uvx builder2ibek xml2yaml /dls_sw/work/R3.14.12.7/support/BL04I-BUILDER/etc/makeIocs/BL04I-VA-IOC-01.xml --yaml /tmp/bl04i-va-ioc-01/config/ioc.yaml
+```
+
+Take a look at the generated `ioc.yaml` and check that it looks correct. It should have a list of support yaml files that are needed to generate the database files for this IOC.
+
+```bash
+less /tmp/bl04i-va-ioc-01/config/ioc.yaml
+```
+
+# Step 4: Run Generic IOC with ibek
+
+Here we will:
+
+- pass the ioc.yaml file to generate the startup script and database files
+- we will then make a db lookup path for `msi` to find the correct DB templates
+- run msi over the substitution file that ibek generated (https://epics.anl.gov/EpicsDocumentation/ExtensionsManuals/msi/msi.html)
+- copy all the runtime files to the NFSv2 share (TFTP for the binary)
+  - ibek generated files in `/epics/runtime`)
+  - binary from the generic IOC bin folder
+  - protocol files and req files (TODO: how do we get these)
+- start the IOC with rtems-proxy.
 
 
 ```bash
-ibek dev instance /workspaces/i04-services/services/bl04i-va-ioc-01
+# for the devcontainer this command links the config folder to /epics/ioc/config
+ibek dev instance /tmp/bl04i-va-ioc-01
+# expand the ioc.yaml into st.cmd and ioc.subst
 ibek runtime generate --no-pvi /epics/ioc/config/ioc.yaml ibek-support**/*/*.ibek.support.yaml
+
+
 includes= somehow we need to work -Ixxx/db -I/xxy/db etc. OR USE an env var if msi supports that
 msi -o${RUNTIME_DIR}/ioc.db ${includes} -I${RUNTIME_DIR} -S${RUNTIME_DIR}/ioc.subst
 cp ${RUNTIME_DIR}/ioc.db /ioc_nfs/
