@@ -1,0 +1,16 @@
+#!/bin/bash
+
+THISDIR=$(dirname $0)
+EPICS_ROOT="${EPICS_ROOT:-/epics}"
+
+if [ -z $IOC_ORIGINAL_LOCATION ]; then
+    echo "please set IOC_ORIGINAL_LOCATION to point to a root folder with ibek-support (and ibek-support-dls)."
+    echo "This is usually the root folder of a generic RTEMS IOC"
+    exit 1
+fi
+
+# set up the generic IOC-like environment for ibek
+mkdir -p "$EPICS_ROOT/ibek-defs/"
+ln -srf $IOC_ORIGINAL_LOCATION/ibek-support*/*/*.ibek.support.yaml "$EPICS_ROOT/ibek-defs/"
+
+ibek ioc generate-schema > "$EPICS_ROOT/ibek-defs/ioc.schema.json"

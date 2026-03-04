@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for dir in /workspaces/rtems-proxy /workspaces/i19-services /workspaces/ibek /workspaces/builder2ibek /workspaces/services-template-helm /workspaces/ec-helm-charts /workspaces/p47-services)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(git -C \"$dir\" log --oneline --since=\"2 weeks ago\" --author-date-order)",
+      "Bash(done)",
+      "Bash(git -C \"$dir\" log --oneline --since=\"1 month ago\" --author-date-order)",
+      "Bash(git -C /workspaces/i19-services status -- services/bl19i-va-ioc-01/)",
+      "Bash(git -C /workspaces/i19-services stash push services/bl19i-va-ioc-01/config/ioc.yaml -m \"pre-ioc-convert stash\")",
+      "Bash(EPICS_ROOT=/tmp/epics-ioc-convert-QuMrXA uv run builder2ibek xml2yaml /dls_sw/work/R3.14.12.7/support/BL19I-BUILDER/etc/makeIocs/BL19I-VA-IOC-01.xml --yaml /workspaces/i19-services/services/bl19i-va-ioc-01/config/ioc.yaml)",
+      "Bash(grep -l \"IOCinfo\\\\|iocAdminSoft\\\\|EventReceiverPMC\\\\|userIO\" /workspaces/builder2ibek/ibek-support-dls/*/*.ibek.support.yaml /workspaces/builder2ibek/ibek-support/*/*.ibek.support.yaml)"
+    ]
+  }
+}

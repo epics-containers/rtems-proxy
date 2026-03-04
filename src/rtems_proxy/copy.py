@@ -44,10 +44,6 @@ def copy_rtems(debug: bool = False):
     can access them
     """
 
-    # TODO - this function is currently specific to legacy built IOCs
-    # TODO - once IOCs are built in containers review this function to make it
-    # TODO   work for both legacy and container built IOCs (it might just work?)
-
     # these represent where the rtems-proxy container mounts the IOC NFS and TFTP
     # shares
     local_tftp_root = GLOBALS.RTEMS_TFTP_ROOT_PATH
@@ -55,18 +51,18 @@ def copy_rtems(debug: bool = False):
 
     sts = list(Path(GLOBALS.IOC_ORIGINAL_LOCATION).glob("bin/RTEMS-beatnik/st*"))
     if len(sts) == 0:
-        raise FileNotFoundError(
-            f"No RTEMS startup script found at "
-            f"{GLOBALS.IOC_ORIGINAL_LOCATION}/bin/RTEMS-beatnik/st*"
-        )
-    ioc_script_name = sts[0].name
+        ioc_script_name = "st.cmd"
+    else:
+        ioc_script_name = sts[0].name
 
     # copy the IOC runtime files to the NFS root
+    # Note --ignore-missing-args as the 'Hybrid' IOC wont have /db or startup script
     os.chdir(GLOBALS.IOC_ORIGINAL_LOCATION)
     subprocess.run(
         [
             "rsync",
             "--delete",
+            "--ignore-missing-args",
             "-r",
             "data",
             "db",

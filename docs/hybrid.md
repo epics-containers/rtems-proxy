@@ -33,7 +33,7 @@ To test the correct operation of the rtems proxy you can do this:
 - Point at a built generic IOC set the IOC_NAME.
 
 ```bash
-export IOC_NAME=BL06I-VA-IOC-01
+export IOC_NAME=BL-VA-IOC-01
 export IOC_ORIGINAL_LOCATION=/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01
 ```
 
@@ -84,6 +84,12 @@ In this example we will generate a temporary ioc.yaml from the i04 vacuum IOC bu
 
 In a real example you would add the resulting `ioc.yaml` into your IOC instance definition in the target beamline's services repository.
 
+IMPORTANT: you will need the latest version of builder2ibek for this to work (assuming recent updates are needed). In this case do:
+```bash
+uv pip install -e ../builder2ibek
+```
+and don't use uvx below
+
 e.g.
 ```bash
 uvx builder2ibek xml2yaml /dls_sw/work/R3.14.12.7/support/BL19I-BUILDER/etc/makeIocs/BL19I-VA-IOC-01.xml --yaml /workspaces/i19-services/services/bl19i-va-ioc-01/config/ioc.yaml
@@ -108,17 +114,25 @@ Here we will:
   - protocol files and req files (TODO: how do we get these)
 - start the IOC with rtems-proxy.
 
+NOTE: these commands are what is needed in start.sh for RTEMS hybrid IOCs.
 
 ```bash
-# for the devcontainer this command links the config folder to /epics/ioc/config
-ibek dev instance /workspaces/i19-services/services/bl19i-va-ioc-01
+# make sure the schema is up to date and epics/ibek-defs has symlinks to all support yamls
+./update-schema # this wont be needed in start.sh
+export RUNTIME_DIR=/epics/runtime # this wont be needed in start.sh
+
+##### start.sh should look like this ###################################################
 # expand the ioc.yaml into st.cmd and ioc.subst
-ibek runtime generate --no-pvi /epics/ioc/config/ioc.yaml $IOC_ORIGINAL_LOCATION/ibek-support**/*/*.ibek.support.yaml
+ibek runtime generate2 /epics/ioc/config
 rsync -r $IOC_ORIGINAL_LOCATION/data/ /ioc_nfs/
 
-includes=$(cat $IOC_ORIGINAL_LOCATION/data/msi.args)
-msi -o${RUNTIME_DIR}/ioc.db ${includes} -I${RUNTIME_DIR} -S${RUNTIME_DIR}/ioc.subst
+# sort out include paths - both as includes to msi and env vars
+source $IOC_ORIGINAL_LOCATION/data/msi.vars
+# expand the subst file with msi using above (using eval to avoid zsh issues)
+eval "msi -o${RUNTIME_DIR}/ioc.db ${MSI_INCLUDES} -I${RUNTIME_DIR} -S${RUNTIME_DIR}/ioc.subst"
 rsync ${RUNTIME_DIR}/ioc.db /ioc_nfs/
-# also need req files and protocol files?
-rtems-proxy start --no-connect
+rsync -r $IOC_ORIGINAL_LOCATION/data/*.proto* /ioc_nfs/protocol/
+
+# also need req files
+rtems-proxy start --no-connect # real start.sh will connect
 ```
