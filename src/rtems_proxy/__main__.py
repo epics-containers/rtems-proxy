@@ -141,25 +141,25 @@ def dev(
     with open(values) as fp:
         yaml = YAML(typ="safe").load(fp)
     try:
-        ioc_group = yaml["global"]["ioc_group"]
+        domain = yaml["global"]["domain"]
     except KeyError:
-        typer.echo(f"{values} global.ioc_group key missing")
+        typer.echo(f"{values} global.domain key missing")
         raise typer.Exit(1) from None
     try:
-        ioc_group = yaml["global"]["ioc_group"]
-        for item in yaml["ioc-instance"]["globalEnv"]:
+        domain = yaml["global"]["domain"]
+        for item in yaml["global"]["env"]:
             env_vars[item["name"]] = item["value"]
     except KeyError:
-        typer.echo(f"{values} globalEnv key missing")
+        typer.echo(f"{values} global.env key missing")
         raise typer.Exit(1) from None
 
     with open(ioc_values) as fp:
         yaml = YAML(typ="safe").load(fp)
     try:
-        for item in yaml["ioc-instance"]["iocEnv"]:
+        for item in yaml["ioc-instance"]["env"]:
             env_vars[item["name"]] = item["value"]
     except KeyError:
-        typer.echo(f"{ioc_values} iocEnv key missing")
+        typer.echo(f"{ioc_values} ioc.env key missing")
         raise typer.Exit(1) from None
 
     this_dir = Path(__file__).parent
@@ -167,7 +167,7 @@ def dev(
 
     script = Template(template).render(
         env_vars=env_vars,
-        ioc_group=ioc_group,
+        domain=domain,
         ioc_name=ioc_name,
         ioc_path=ioc_path,
     )
