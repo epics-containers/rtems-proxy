@@ -67,13 +67,20 @@ class Configure:
             f"go -a04000000{self.cr}"
             f"reset"
         )
+        nfs_mount = (
+            f"{GLOBALS.RTEMS_NFS_IP}:"
+            f"/srv/software/{GLOBALS.IOC_DOMAIN}/"
+            f"{GLOBALS.IOC_NAME.lower()}:"
+            f"/epics_rtems_root"
+        )
 
-        self.apply_nvm("mot-/dev/enet0-cipa", GLOBALS.RTEMS_IOC_IP)
-        self.apply_nvm("mot-/dev/enet0-snma", GLOBALS.RTEMS_IOC_NETMASK)
-        self.apply_nvm("mot-/dev/enet0-gipa", GLOBALS.RTEMS_IOC_GATEWAY)
-        self.apply_nvm("mot-/dev/enet0-sipa", GLOBALS.RTEMS_NFS_IP)
+        self.apply_nvm("mot-/dev/enet1-cipa", GLOBALS.RTEMS_IOC_IP)
+        self.apply_nvm("mot-/dev/enet1-snma", GLOBALS.RTEMS_IOC_NETMASK)
+        self.apply_nvm("mot-/dev/enet1-gipa", GLOBALS.RTEMS_IOC_GATEWAY)
+        self.apply_nvm("mot-/dev/enet1-sipa", GLOBALS.RTEMS_NFS_IP)
         self.apply_nvm("mot-boot-device", "/dev/em1")
         self.apply_nvm("mot-script-boot", mot_boot)
+        self.apply_nvm("epics-nfsmount", nfs_mount)
         self.apply_nvm("rtems-client-name", GLOBALS.IOC_NAME)
         self.apply_nvm("epics-script", GLOBALS.RTEMS_EPICS_SCRIPT)
 

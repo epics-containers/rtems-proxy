@@ -63,7 +63,7 @@ class _Globals:
         """ NFS mount point for the EPICS IOC """
 
         ########################################################################
-        ## IOC instance config from ioc-instance.env in
+        ## IOC instance config from globals.env in
         ## services/ioc_name/values.yaml
         ## these MUST be set for each RTEMS IOC instance
         ########################################################################
@@ -81,6 +81,9 @@ class _Globals:
             for legacy built IOCs, set to an IOC folder in prod or work
             for in-container (ibek) built IOCs /epics/ioc is the default
         """
+
+        self.IOC_DOMAIN = os.getenv("IOC_DOMAIN")
+        """ The EPICS domain to use for this IOC, e.g. i19 """
 
         ########################################################################
         ## IOC instance config (defaults are normally sufficient)

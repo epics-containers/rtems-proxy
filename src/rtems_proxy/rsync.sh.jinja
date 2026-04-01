@@ -3,7 +3,7 @@
 {% for name,value in env_vars.items() -%}
 export {{ name }}={{ value }}
 {% endfor -%}
-export DOMAIN={{ domain }}
+export IOC_DOMAIN={{ domain }}
 export IOC_NAME={{ ioc_name }}
 export IOC_PATH={{ ioc_path }}
 
