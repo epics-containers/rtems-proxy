@@ -92,7 +92,9 @@ class _Globals:
         self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
         """ the lowercase name of this IOC (derived from the instance folder name) """
 
-        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "/ioc_nfs/st.cmd")
+        self.RTEMS_EPICS_SCRIPT = os.getenv(
+            "RTEMS_EPICS_SCRIPT", f"{self.RUNTIME}/st.cmd"
+        )
         """ override for the standard EPICS startup script filename """
 
         self.RTEMS_EPICS_BINARY = os.getenv(

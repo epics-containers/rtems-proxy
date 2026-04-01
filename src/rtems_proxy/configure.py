@@ -69,7 +69,7 @@ class Configure:
         )
         nfs_mount = (
             f"{GLOBALS.RTEMS_NFS_IP}:"
-            f"/srv/software/{GLOBALS.IOC_DOMAIN}/"
+            f"/srv/software/{GLOBALS.IOC_DOMAIN}/epics/rtems/"
             f"{GLOBALS.IOC_NAME.lower()}:"
             f"/epics_rtems_root"
         )
@@ -83,14 +83,6 @@ class Configure:
         self.apply_nvm("epics-nfsmount", nfs_mount)
         self.apply_nvm("rtems-client-name", GLOBALS.IOC_NAME)
         self.apply_nvm("epics-script", GLOBALS.RTEMS_EPICS_SCRIPT)
-
-        if GLOBALS.RTEMS_EPICS_NFS_MOUNT:
-            self.apply_nvm(
-                "epics-nfsmount",
-                f"{GLOBALS.RTEMS_NFS_IP}:"
-                f"{GLOBALS.RTEMS_EPICS_NFS_MOUNT}/{GLOBALS.IOC_NAME.lower()}:"
-                f"{GLOBALS.RTEMS_NFS_ROOT_PATH}",
-            )
 
         if GLOBALS.RTEMS_EPICS_NTP_SERVER:
             self.apply_nvm("epics-ntpserver", GLOBALS.RTEMS_EPICS_NTP_SERVER)
