@@ -22,7 +22,7 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 
 # Sync the project without its dev dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-editable --no-dev
+    uv sync --locked --no-editable --no-dev --managed-python
 
 ENV PATH=/app/.venv/bin:$PATH
 
