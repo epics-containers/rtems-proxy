@@ -14,6 +14,7 @@ from .configure import Configure
 from .connect import ioc_connect, motboot_connect, report
 from .copy import check_new_version, copy_rtems, save_current_version
 from .globals import GLOBALS
+from .hybrid import hybrid_prepare
 
 __all__ = ["main"]
 
@@ -58,6 +59,11 @@ def start(
     raise_errors: bool = typer.Option(
         True, "--raise-errors/--no-raise-errors", help="raise errors instead of exiting"
     ),
+    hybrid: bool = typer.Option(
+        False,
+        "--hybrid/--no-hybrid",
+        help="hybrid mode: generate runtime from ibek+msi before copying",
+    ),
 ):
     """
     Starts an RTEMS IOC. Places the IOC binaries in the expected location,
@@ -79,7 +85,9 @@ def start(
         f"Remote control startup of RTEMS IOC {GLOBALS.IOC_NAME}"
         f" at {GLOBALS.RTEMS_IOC_IP}"
     )
-    if copy:
+    if hybrid:
+        hybrid_prepare()
+    elif copy:
         copy_rtems()
 
     # always reboot if the IOC definition has changed

@@ -101,38 +101,48 @@ Take a look at the generated `ioc.yaml` and check that it looks correct. It shou
 less /workspaces/i19-services/bl19i-va-ioc-01config/ioc.yaml
 ```
 
-# Step 4: Run Generic IOC with ibek
+# Step 4: Run Generic IOC with ibek (automated)
 
-Here we will:
-
-- pass the ioc.yaml file to generate the startup script and database files
-- we will then make a db lookup path for `msi` to find the correct DB templates
-- run msi over the substitution file that ibek generated (https://epics.anl.gov/EpicsDocumentation/ExtensionsManuals/msi/msi.html)
-- copy all the runtime files to the NFSv2 share (TFTP for the binary)
-  - ibek generated files in `/epics/runtime`)
-  - binary from the generic IOC bin folder
-  - protocol files and req files (TODO: how do we get these)
-- start the IOC with rtems-proxy.
-
-NOTE: these commands are what is needed in start.sh for RTEMS hybrid IOCs.
+The `--hybrid` flag on `rtems-proxy start` automates the full sequence: linking
+ibek-support YAMLs, running ibek to generate `st.cmd` and `ioc.subst`, expanding
+the substitution file with `msi`, and placing all files on NFS/TFTP.
 
 ```bash
-# make sure the schema is up to date and epics/ibek-defs has symlinks to all support yamls
-./update-schema # this wont be needed in start.sh
-export RUNTIME_DIR=/epics/runtime # this wont be needed in start.sh
+rtems-proxy start --hybrid --no-connect
+```
 
-##### start.sh should look like this ###################################################
-# expand the ioc.yaml into st.cmd and ioc.subst
-ibek runtime generate2 /epics/ioc/config
-rsync -r $IOC_ORIGINAL_LOCATION/data/ /ioc_nfs/
+This performs:
+1. Symlinks `ibek-support*/*/*.ibek.support.yaml` from `$IOC_ORIGINAL_LOCATION` into `/epics/ibek-defs/`
+2. Runs `ibek runtime generate2 /epics/ioc/config --no-pvi` → produces `st.cmd` + `ioc.subst` in `/epics/runtime/`
+3. Sources `$IOC_ORIGINAL_LOCATION/data/msi.vars` for `MSI_INCLUDES`, runs `msi` to expand `ioc.subst` → `ioc.db`
+4. Places `st.cmd`, `ioc.db`, protocol files, and `dbd/` on NFS; binary on TFTP
 
-# sort out include paths - both as includes to msi and env vars
+In a Kubernetes deployment, the `values.yaml` args block would be:
+```yaml
+args:
+  - |
+    stdio-socket --ptty "rtems-proxy start --hybrid"
+```
+
+## Manual equivalent
+
+For debugging, the individual steps can be run manually:
+
+```bash
+# symlink ibek-support YAMLs
+mkdir -p /epics/ibek-defs/
+ln -srf $IOC_ORIGINAL_LOCATION/ibek-support*/*/*.ibek.support.yaml /epics/ibek-defs/
+
+# generate st.cmd and ioc.subst from ioc.yaml
+ibek runtime generate2 /epics/ioc/config --no-pvi
+
+# expand substitution file with msi
 source $IOC_ORIGINAL_LOCATION/data/msi.vars
-# expand the subst file with msi using above (using eval to avoid zsh issues)
-eval "msi -o${RUNTIME_DIR}/ioc.db ${MSI_INCLUDES} -I${RUNTIME_DIR} -S${RUNTIME_DIR}/ioc.subst"
-rsync ${RUNTIME_DIR}/ioc.db /ioc_nfs/
-rsync -r $IOC_ORIGINAL_LOCATION/data/*.proto* /ioc_nfs/protocol/
+eval "msi -o/epics/runtime/ioc.db ${MSI_INCLUDES} -I/epics/runtime -S/epics/runtime/ioc.subst"
 
-# also need req files
-rtems-proxy start --no-connect # real start.sh will connect
+# place files and start
+rsync -r $IOC_ORIGINAL_LOCATION/data/ /ioc_nfs/data/
+rsync /epics/runtime/st.cmd /epics/runtime/ioc.db /ioc_nfs/
+rsync -r $IOC_ORIGINAL_LOCATION/data/*.proto* /ioc_nfs/protocol/
+rtems-proxy start --no-connect
 ```

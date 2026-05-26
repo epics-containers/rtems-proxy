@@ -34,6 +34,16 @@ class _Globals:
 
         self.RUNTIME = self.EPICS_ROOT / "runtime"
 
+        self.IBEK_DEFS_PATH = Path(
+            os.getenv("IBEK_DEFS_PATH", self.EPICS_ROOT / "ibek-defs")
+        )
+        """ The folder where ibek support YAML definitions are symlinked """
+
+        self.IOC_CONFIG_PATH = Path(
+            os.getenv("IOC_CONFIG_PATH", self.EPICS_ROOT / "ioc" / "config")
+        )
+        """ The folder containing the ioc.yaml instance definition """
+
         self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH", "linux-x86_64")
         """ Host architecture """
 
