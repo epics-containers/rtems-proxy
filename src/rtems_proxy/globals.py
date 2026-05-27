@@ -115,3 +115,8 @@ class _Globals:
 
 
 GLOBALS = _Globals()
+
+
+def reload_globals():
+    """Re-initialize GLOBALS from current os.environ."""
+    GLOBALS.__init__()

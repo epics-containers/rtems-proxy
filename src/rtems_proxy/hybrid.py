@@ -12,17 +12,50 @@ from .globals import GLOBALS
 from .telnet import report
 
 
-def hybrid_prepare():
+def hybrid_prepare(instance_path: Path | None = None):
     """
     Run the full hybrid IOC preparation sequence: generate runtime files
     from ibek + msi, then place all assets on NFS and TFTP for the
     RTEMS crate to boot.
+
+    If instance_path is given, symlink its config/ into IOC_CONFIG_PATH
+    so that ibek can find the ioc.yaml.
     """
+    GLOBALS.RUNTIME.mkdir(parents=True, exist_ok=True)
+    GLOBALS.RTEMS_NFS_ROOT_PATH.mkdir(parents=True, exist_ok=True)
+    GLOBALS.RTEMS_TFTP_ROOT_PATH.mkdir(parents=True, exist_ok=True)
+
+    if instance_path:
+        _link_instance_config(instance_path)
+
     _link_ibek_support_yamls()
     _run_ibek_generate()
     _run_msi()
     _copy_to_nfs()
     _copy_binary_to_tftp()
+
+
+def _link_instance_config(instance_path: Path):
+    """
+    Symlink the instance config directory into IOC_CONFIG_PATH so ibek
+    can discover ioc.yaml — replaces the manual 'ibek dev instance' step.
+    """
+    config_src = instance_path / "config"
+    if not config_src.exists():
+        typer.echo(f"No config directory found at {config_src}")
+        raise typer.Exit(1)
+
+    config_dst = GLOBALS.IOC_CONFIG_PATH
+    if config_dst.is_symlink():
+        config_dst.unlink()
+    elif config_dst.exists():
+        import shutil
+
+        shutil.rmtree(config_dst)
+
+    config_dst.parent.mkdir(parents=True, exist_ok=True)
+    config_dst.symlink_to(config_src)
+    report(f"Linked instance config {config_src} -> {config_dst}")
 
 
 def _link_ibek_support_yamls():
@@ -78,38 +111,22 @@ def _run_ibek_generate():
     report("ibek generate2 completed")
 
 
-def _parse_msi_includes() -> str:
-    """
-    Extract MSI_INCLUDES from data/msi.vars by sourcing it in bash.
-    """
-    msi_vars = GLOBALS.IOC_ORIGINAL_LOCATION / "data" / "msi.vars"
-    if not msi_vars.exists():
-        typer.echo(f"msi.vars not found at {msi_vars}")
-        raise typer.Exit(1)
-
-    result = subprocess.run(
-        ["bash", "-c", f'source "{msi_vars}" && echo "$MSI_INCLUDES"'],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        typer.echo(f"Failed to source msi.vars: {result.stderr}")
-        raise typer.Exit(1)
-
-    return result.stdout.strip()
-
-
 def _run_msi():
     """
     Expand ioc.subst into ioc.db using msi with include paths from msi.vars.
+
+    The subst file references macros like $(IOCSTATS) in file paths, so we
+    source the full msi.vars to make all macro definitions available to msi.
     """
-    msi_includes = _parse_msi_includes()
+    msi_vars = GLOBALS.IOC_ORIGINAL_LOCATION / "data" / "msi.vars"
     runtime = str(GLOBALS.RUNTIME)
 
-    cmd = f"msi -o{runtime}/ioc.db {msi_includes} -I{runtime} -S{runtime}/ioc.subst"
+    cmd = (
+        f'source "{msi_vars}" && '
+        f"msi -o{runtime}/ioc.db $MSI_INCLUDES -I{runtime} -S{runtime}/ioc.subst"
+    )
     report("Running msi")
-    result = subprocess.run(cmd, shell=True, check=False)
+    result = subprocess.run(["bash", "-c", cmd], check=False)
     if result.returncode != 0:
         typer.echo("msi expansion failed")
         raise typer.Exit(1)

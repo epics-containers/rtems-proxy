@@ -65,15 +65,19 @@
             "target": "/workspaces/${localWorkspaceFolderBasename}/.venv",
             "type": "volume"
         },
-        // mount in /dls_sw prod and work for testing hybrid mode
+        // WARNING- remove these to work on this repo outside of DLS ///////////////////
+        // mount in /dls_sw readonly for testing hybrid mode
+        // slave propagation ensures autofs submounts on the host
+        // are visible inside the container without needing to trigger them from within it
         {
-            "source": "/dls_sw/prod",
-            "target": "/dls_sw/prod,ro",
-            "type": "bind"
+            "type": "bind",
+            "source": "/dls_sw",
+            "target": "/dls_sw,readonly,bind-propagation=slave"
         },
+        // folders we would like to work on from here!
         {
-            "source": "/dls_sw/work",
-            "target": "/dls_sw/work,ro",
+            "source": "/dls_sw/work/R7.0.7/ioc/BL/",
+            "target": "/dls_sw/work/R7.0.7/ioc/BL/",
             "type": "bind"
         }
     ],
