@@ -187,7 +187,10 @@ def _copy_binary_to_tftp():
     Copy the IOC .boot binary to TFTP with the standard name.
     """
     tftp = GLOBALS.RTEMS_TFTP_ROOT_PATH
-    ioc_bin_name = f"{GLOBALS.IOC_NAME.upper()}.boot"
+    # source .boot is named after the build folder (IOC_BUILD_NAME), not the
+    # deployment IOC_NAME -- these differ for legacy builds (e.g.
+    # BL-VA-IOC-01.boot under .../bl-va-ioc-01 deployed as bl19i-va-ioc-01)
+    ioc_bin_name = f"{GLOBALS.IOC_BUILD_NAME.upper()}.boot"
     ioc_bin_src = GLOBALS.IOC_ORIGINAL_LOCATION / "bin" / "RTEMS-beatnik" / ioc_bin_name
 
     if not ioc_bin_src.exists():

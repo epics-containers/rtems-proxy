@@ -89,9 +89,15 @@ def _load_instance_env(instance_path: Path) -> tuple[dict[str, str], str]:
 
     env_vars["IOC_DOMAIN"] = domain
 
-    ioc_original = env_vars.get("IOC_ORIGINAL_LOCATION", "")
-    if ioc_original:
-        env_vars["IOC_NAME"] = Path(ioc_original).name.upper()
+    # IOC_NAME is the deployment/instance name, i.e. the services instance
+    # folder name (and the helm release / k8s service name). It must NOT be
+    # derived from IOC_ORIGINAL_LOCATION: that points at the legacy build
+    # folder, whose basename can differ from the instance name (e.g.
+    # bl-va-ioc-01 vs bl19i-va-ioc-01). Using the build folder name produced
+    # the wrong TFTP boot path (/iocs/bl-va-ioc-01/rtems.ioc.bin), NFS mount
+    # and rtems-client-name. The instance folder name is the authoritative
+    # source, matching the $(IOC_NAME) subPathExpr volume mounts.
+    env_vars["IOC_NAME"] = instance_path.name
 
     for name, value in env_vars.items():
         os.environ[name] = value

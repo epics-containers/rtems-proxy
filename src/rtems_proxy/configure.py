@@ -71,7 +71,7 @@ class Configure:
             f"{GLOBALS.RTEMS_NFS_IP}:"
             f"/srv/software/{GLOBALS.IOC_DOMAIN}/epics/rtems/"
             f"{GLOBALS.IOC_NAME.lower()}:"
-            f"/epics_rtems_root"
+            f"/epics"
         )
 
         self.apply_nvm("mot-/dev/enet1-cipa", GLOBALS.RTEMS_IOC_IP)
