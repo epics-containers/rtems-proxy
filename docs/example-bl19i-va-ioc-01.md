@@ -20,7 +20,11 @@ Three existing pieces, all already on `/dls_sw` and in the services repo:
   `/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01`. The pre-built Generic IOC for
   beamline vacuum, including the `bin/RTEMS-beatnik/BL-VA-IOC-01.boot` binary,
   the `ibek-support*/` submodules, and the auto-generated `data/msi.vars`. We
-  will boot from this binary and use its ibek support YAMLs.
+  will boot from this binary and use its ibek support YAMLs. See
+  [hybrid.md — The Generic IOC](hybrid.md#the-generic-ioc) for the special
+  additions that make a Generic IOC usable in hybrid mode, and
+  [epics-containers — Generic IOCs and Instances](https://epics-containers.github.io/main/explanations/introduction.html#generic-iocs-and-instances)
+  for the broader Generic-IOC concept.
 - **Target services-repo instance folder** —
   `/workspaces/i19-services/services/bl19i-va-ioc-01`. The Helm values and
   config for this instance, holding both the `values.yaml` (env vars and
@@ -42,8 +46,8 @@ services/
 
 ### Beamline-wide globals — `services/values.yaml`
 
-These RTEMS values are already set for i19 and shared with every IOC on the
-beamline. You should not need to touch this file, but for context the four
+These RTEMS values are for i19 and shared with every IOC on the
+beamline. Their are four
 RTEMS-related entries (plus the domain key that `_load_instance_env` reads)
 look like this:
 
