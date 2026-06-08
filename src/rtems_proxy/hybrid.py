@@ -3,6 +3,7 @@ Hybrid mode: generate IOC runtime assets from ibek + msi and place them
 for an RTEMS crate to boot from NFS/TFTP.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -96,9 +97,14 @@ def _run_ibek_generate():
         typer.echo(f"IOC config directory {config_dir} does not exist")
         raise typer.Exit(1)
 
+    # ibek's st.cmd template renders 'dbLoadRecords {RUNTIME_DIR}/ioc.db' from
+    # the RUNTIME_DIR env var (no default -- empty yields a bad '/ioc.db' path).
+    # Point it at the runtime folder the crate mounts at /epics/runtime.
+    env = {**os.environ, "RUNTIME_DIR": str(GLOBALS.RUNTIME)}
+
     cmd = ["ibek", "runtime", "generate2", str(config_dir), "--no-pvi"]
     report(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False, env=env)
     if result.returncode != 0:
         typer.echo("ibek runtime generate2 failed")
         raise typer.Exit(1)
