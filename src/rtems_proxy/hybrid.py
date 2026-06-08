@@ -140,37 +140,38 @@ def _run_msi():
 
 def _copy_to_nfs():
     """
-    Place all runtime files into the NFS root for the RTEMS crate.
+    Place runtime files into the NFS root under two subfolders that match the
+    paths the generated st.cmd expects once the crate has NFS-mounted the root
+    at /epics:
+
+      runtime/  st.cmd, ioc.db, the protocol/ folder and autosave *.req files
+                (st.cmd: epics-script=/epics/runtime/st.cmd,
+                 STREAM_PROTOCOL_PATH=/epics/runtime/protocol/,
+                 set_requestfile_path("/epics", "runtime"))
+      ioc/      the dbd/ folder
+                (st.cmd: cd "/epics/ioc"; dbLoadDatabase dbd/ioc.dbd)
     """
     nfs = GLOBALS.RTEMS_NFS_ROOT_PATH
     runtime = GLOBALS.RUNTIME
     ioc_root = GLOBALS.IOC_ORIGINAL_LOCATION
 
+    nfs_runtime = Path(nfs) / "runtime"
+    nfs_ioc = Path(nfs) / "ioc"
+    nfs_runtime.mkdir(parents=True, exist_ok=True)
+    nfs_ioc.mkdir(parents=True, exist_ok=True)
+
+    # runtime/: startup script and the expanded database
     subprocess.run(
-        ["rsync", f"{runtime}/st.cmd", f"{nfs}/"],
+        ["rsync", f"{runtime}/st.cmd", f"{nfs_runtime}/"],
+        check=True,
+    )
+    subprocess.run(
+        ["rsync", f"{runtime}/ioc.db", f"{nfs_runtime}/"],
         check=True,
     )
 
-    subprocess.run(
-        ["rsync", f"{runtime}/ioc.db", f"{nfs}/"],
-        check=True,
-    )
-
-    data_src = ioc_root / "data"
-    if data_src.exists():
-        subprocess.run(
-            ["rsync", "-r", f"{data_src}/", f"{nfs}/data/"],
-            check=True,
-        )
-
-    dbd_src = ioc_root / "dbd"
-    if dbd_src.exists():
-        subprocess.run(
-            ["rsync", "-r", f"{dbd_src}/", f"{nfs}/dbd/"],
-            check=True,
-        )
-
-    protocol_dir = Path(nfs) / "protocol"
+    # runtime/protocol/: StreamDevice protocol files (data/*.proto*)
+    protocol_dir = nfs_runtime / "protocol"
     protocol_dir.mkdir(parents=True, exist_ok=True)
     proto_files = list((ioc_root / "data").glob("*.proto*"))
     if proto_files:
@@ -179,7 +180,24 @@ def _copy_to_nfs():
             check=True,
         )
 
-    report(f"Placed runtime files in {nfs}")
+    # runtime/: autosave request files -- st.cmd searches /epics/runtime for
+    # them via set_requestfile_path("/epics", "runtime")
+    req_files = list(Path(runtime).glob("*.req"))
+    if req_files:
+        subprocess.run(
+            ["rsync"] + [str(f) for f in req_files] + [f"{nfs_runtime}/"],
+            check=True,
+        )
+
+    # ioc/dbd/: database definition loaded by 'cd /epics/ioc; dbLoadDatabase'
+    dbd_src = ioc_root / "dbd"
+    if dbd_src.exists():
+        subprocess.run(
+            ["rsync", "-r", f"{dbd_src}/", f"{nfs_ioc}/dbd/"],
+            check=True,
+        )
+
+    report(f"Placed runtime files in {nfs_runtime} and {nfs_ioc}")
 
 
 def _copy_binary_to_tftp():

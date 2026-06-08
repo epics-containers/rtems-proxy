@@ -16,7 +16,10 @@ def save_current_version():
 
     We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
     """
-    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    version_file = (
+        Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "runtime" / "rtems_proxy_version.txt"
+    )
+    version_file.parent.mkdir(parents=True, exist_ok=True)
     with open(version_file, "w") as vf:
         vf.write(str(GLOBALS.IOC_ORIGINAL_LOCATION) + "\n")
 
@@ -28,7 +31,9 @@ def check_new_version():
 
     We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
     """
-    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    version_file = (
+        Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "runtime" / "rtems_proxy_version.txt"
+    )
     if not version_file.exists():
         return True
 
