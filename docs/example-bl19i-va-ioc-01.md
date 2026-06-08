@@ -212,8 +212,37 @@ matching fixes under [Troubleshooting](hybrid.md#troubleshooting).
 
 ## Step 4 — Connect to the real crate from the devcontainer
 
-Once the prepare stage is clean, drop `--no-connect` to drive the actual
-BL19I crate:
+### Push the boot binary to TFTP first (one-off, from the workstation)
+
+Before the crate can boot, the rebuilt `.boot` image has to land on the real
+i19 TFTP server. In cluster mode this is automatic — the proxy pod mounts
+the `i19-binaries-claim` PVC directly — but the devcontainer cannot mount a
+cluster PVC, so this one step must be done **outside the devcontainer**,
+from your workstation where `kubectl` and the cluster credentials live.
+
+The i19 namespace already runs a long-lived pod that mounts the TFTP PVC
+without a `subPath`, exactly for this purpose. From the workstation:
+
+```bash
+# 1. find the uploader pod
+module load ec/i19
+TFTP_POD=$(kubectl get pods -o name | grep tftp)
+
+# 2. copy the binary straight from /dls_sw into the uploader pod
+#    (source filename is BL-VA-IOC-01.boot, destination must be rtems.ioc.bin
+#    because that's the name motBoot will request)
+kubectl cp \
+    /dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/bin/RTEMS-beatnik/BL-VA-IOC-01.boot \
+    ${TFTP_POD#pod/}:/iocs/bl19i-va-ioc-01/rtems.ioc.bin
+```
+
+Adjust the destination path to match the uploader pod's PVC mount layout
+(typically one subdirectory per `IOC_NAME` at the PVC root).
+
+### Drive the crate
+
+Once the binary is in place on TFTP, drop `--no-connect` back in the
+devcontainer to drive the actual BL19I crate:
 
 ```bash
 rtems-proxy start --hybrid \
@@ -236,14 +265,14 @@ machinery is involved at deploy time:
    - `services/bl19i-va-ioc-01/values.yaml`
    - `services/bl19i-va-ioc-01/config/ioc.yaml`
 2. Push the branch.
-3. Because this is a brand-new instance, argocd does not yet know about it.
+3. If this is a brand-new instance, argocd does not yet know about it.
    Bootstrap it once from the branch with:
    ```bash
    ec deploy bl19i-va-ioc-01 <branch-name>
    ```
    On subsequent updates this manual step is not needed — argocd picks up
    changes to the existing instance automatically.
-4. Open the merge request and merge to the default branch. After merge, the
+4. Each time you push changes to the feature branch the
    existing i19 GitOps pipeline (argocd / beamline-chart sync) renders the
    Helm chart and deploys the proxy pod. The container starts with the args
    from `values.yaml` — `rtems-proxy start --hybrid` with no `--instance`
