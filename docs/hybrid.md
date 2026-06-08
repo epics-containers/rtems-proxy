@@ -309,3 +309,9 @@ The `msi.vars` file must be sourced (not just `MSI_INCLUDES`) because the
 `-I` include paths. rtems-proxy handles this automatically, but if running
 manually, make sure to `source $IOC_ORIGINAL_LOCATION/data/msi.vars` before
 invoking `msi`.
+
+## Worked example
+
+For an end-to-end walkthrough using a concrete instance (BL19I vacuum IOC,
+from VxWorks builder XML through devcontainer testing to a cluster deploy),
+see [example-bl19i-va-ioc-01.md](example-bl19i-va-ioc-01.md).

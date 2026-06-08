@@ -99,3 +99,6 @@ This hybrid approach will be useful for quickly getting up and running on RTEMS 
 - It will still pull all the DB templates from /dls_sw/prod
 
 This approach is discussed in more detail here: [RTEMS Hybrid IOCs](hybrid.md)
+
+For a step-by-step worked example using bl19i-va-ioc-01, see
+[example-bl19i-va-ioc-01.md](example-bl19i-va-ioc-01.md).
