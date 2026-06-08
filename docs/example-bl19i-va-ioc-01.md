@@ -28,42 +28,83 @@ Three existing pieces, all already on `/dls_sw` and in the services repo:
 
 ## Step 1 — Create the instance in i19-services
 
-If the folder does not yet exist, create the minimal layout:
+If the folder does not yet exist, create the minimal layout — alongside the
+shared beamline-wide `services/values.yaml` that already exists in the repo:
 
 ```
-services/bl19i-va-ioc-01/
-├── values.yaml
-└── config/
-    └── ioc.yaml    # filled in by step 2
+services/
+├── values.yaml                  # beamline-wide globals, shared by every i19 IOC
+└── bl19i-va-ioc-01/
+    ├── values.yaml              # this instance's settings
+    └── config/
+        └── ioc.yaml             # filled in by step 2
 ```
 
-`services/bl19i-va-ioc-01/values.yaml` for this instance:
+### Beamline-wide globals — `services/values.yaml`
+
+These RTEMS values are already set for i19 and shared with every IOC on the
+beamline. You should not need to touch this file, but for context the four
+RTEMS-related entries (plus the domain key that `_load_instance_env` reads)
+look like this:
+
+```yaml
+global:
+  # beamline or accelerator technical area
+  domain: i19
+  env:
+    # default gateway written into the crate's motBoot NVM at configure time
+    - name: RTEMS_IOC_GATEWAY
+      value: 172.23.119.254
+    # subnet mask written into motBoot NVM
+    - name: RTEMS_IOC_NETMASK
+      value: 255.255.255.0
+    # NFS server the crate mounts /ioc_nfs from at boot
+    - name: RTEMS_NFS_IP
+      value: 172.23.119.226
+    # TFTP server the crate fetches its .boot image from
+    - name: RTEMS_TFTP_IP
+      value: 172.23.119.226
+```
+
+### Instance settings — `services/bl19i-va-ioc-01/values.yaml`
+
+This is the file you create for the new instance:
 
 ```yaml
 ioc-instance:
+  # proxy + ibek + msi runtime image (epics-containers registry)
   image: ghcr.io/epics-containers/rtems-proxy-developer:2.1.0
   args:
+    # container command: hybrid-mode rtems-proxy wrapped in stdio-socket
     - |
       stdio-socket --ptty "rtems-proxy start --hybrid"
 
   env:
+    # generic IOC build tree — source of ibek-support YAMLs, msi.vars and the .boot binary
     - name: IOC_ORIGINAL_LOCATION
       value: /dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01
+    # static IP the crate is given via BOOTP/DHCP by MAC address
     - name: RTEMS_IOC_IP
       value: 172.23.119.98
+    # terminal-server host:port for the crate's serial console (telnet)
     - name: RTEMS_CONSOLE
       value: BL19I-NT-TSERV-01:7002
 
   volumeMounts:
+    # rtems-proxy writes runtime assets here; crate mounts the same dir via NFSv2
     - name: nfsv2
       mountPath: /ioc_nfs
+      # one subdir per IOC under the shared beamline NFS export
       subPathExpr: $(IOC_NAME)
+    # rtems-proxy drops the .boot binary here; TFTP server publishes it to the crate
     - name: tftp
       mountPath: /ioc_tftp
       subPathExpr: $(IOC_NAME)
+    # read-only DLS work area — needed to read the generic IOC tree
     - name: work
       mountPath: /dls_sw/work
       readOnly: true
+    # read-only DLS prod area — msi reads support-module DB templates from here
     - name: prod
       mountPath: /dls_sw/prod
       readOnly: true
@@ -71,22 +112,21 @@ ioc-instance:
   volumes:
     - name: nfsv2
       hostPath:
+        # i19 NFS export root for RTEMS IOCs
         path: /dls_sw/i19/epics/rtems
     - name: tftp
       persistentVolumeClaim:
+        # shared PVC backing the i19 TFTP server
         claimName: i19-binaries-claim
     - name: work
       hostPath:
+        # cluster-node bind-mount of the DLS work area
         path: /dls_sw/work
     - name: prod
       hostPath:
+        # cluster-node bind-mount of the DLS prod area
         path: /dls_sw/prod
 ```
-
-The beamline-wide settings (`RTEMS_IOC_GATEWAY`, `RTEMS_IOC_NETMASK`,
-`RTEMS_NFS_IP`, `RTEMS_TFTP_IP`, `global.domain: i19`) live one level up in
-`services/values.yaml` and are shared with the other i19 IOCs — there is
-nothing instance-specific to add there for this example.
 
 ## Step 2 — Convert the builder XML to ioc.yaml
 
@@ -119,9 +159,21 @@ for the full list of conversion quirks.
 
 ## Step 3 — Test in a devcontainer
 
-Open the rtems-proxy developer container attached to the
-`/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01` generic IOC tree, then run the
-hybrid prepare step on its own (no console connection, no real crate):
+Open this repository's devcontainer (`.devcontainer/devcontainer.json`). Its
+mounts give you exactly what hybrid mode needs:
+
+- `/dls_sw` bound read-only — so `msi` can resolve the prod support-module
+  template paths referenced from `msi.vars`.
+- `/dls_sw/work/R7.0.7/ioc/BL/` bound read-write — the working area for the
+  BL generic IOCs, where you can build or tweak `bl-va-ioc-01` in place from
+  inside the container.
+- `/workspaces` mapped to the parent of this repo — clone `i19-services`
+  alongside `rtems-proxy` here so that
+  `/workspaces/i19-services/services/bl19i-va-ioc-01` resolves for the
+  `--instance` flag below.
+
+Then run the hybrid prepare step on its own (no console connection, no real
+crate):
 
 ```bash
 rtems-proxy start --hybrid --no-connect \
@@ -183,16 +235,23 @@ machinery is involved at deploy time:
 1. Commit the two new files in the i19-services repo:
    - `services/bl19i-va-ioc-01/values.yaml`
    - `services/bl19i-va-ioc-01/config/ioc.yaml`
-2. Push the branch and open the merge request.
-3. After merge, the existing i19 GitOps pipeline (argocd / beamline-chart
-   sync) renders the Helm chart and deploys the proxy pod. The container
-   starts with the args from `values.yaml` —
-   `rtems-proxy start --hybrid` with no `--instance` flag, because the env
-   vars are now coming from the Helm-rendered env block and the config is
-   mounted into `/epics/ioc/config` by Kubernetes. See
-   [hybrid.md — In a Kubernetes cluster](hybrid.md#in-a-kubernetes-cluster)
+2. Push the branch.
+3. Because this is a brand-new instance, argocd does not yet know about it.
+   Bootstrap it once from the branch with:
+   ```bash
+   ec deploy bl19i-va-ioc-01 <branch-name>
+   ```
+   On subsequent updates this manual step is not needed — argocd picks up
+   changes to the existing instance automatically.
+4. Open the merge request and merge to the default branch. After merge, the
+   existing i19 GitOps pipeline (argocd / beamline-chart sync) renders the
+   Helm chart and deploys the proxy pod. The container starts with the args
+   from `values.yaml` — `rtems-proxy start --hybrid` with no `--instance`
+   flag, because the env vars are now coming from the Helm-rendered env
+   block and the config is mounted into `/epics/ioc/config` by Kubernetes.
+   See [hybrid.md — In a Kubernetes cluster](hybrid.md#in-a-kubernetes-cluster)
    for the values.yaml shape that drives this.
-4. Verify by tailing the proxy-pod logs in the cluster — the same seven
+5. Verify by tailing the proxy-pod logs in the cluster — the same seven
    progress lines from step 3 should appear, followed by the motboot
    configuration, reboot, and the live console.
 
