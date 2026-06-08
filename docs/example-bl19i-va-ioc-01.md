@@ -46,10 +46,10 @@ services/
 
 ### Beamline-wide globals — `services/values.yaml`
 
-These RTEMS values are for i19 and shared with every IOC on the
-beamline. Their are four
-RTEMS-related entries (plus the domain key that `_load_instance_env` reads)
-look like this:
+These RTEMS values are for  all i19 RTEMS IOCs on the
+beamline.
+
+There are four RTEMS-related entries (plus the domain key that `_load_instance_env` reads) which look like this:
 
 ```yaml
 global:
