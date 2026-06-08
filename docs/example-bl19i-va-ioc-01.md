@@ -185,24 +185,28 @@ rtems-proxy start --hybrid --no-connect \
 ```
 
 The `--instance` flag reads the two `values.yaml` files you set up in step 1,
-exports all the env vars (including `IOC_NAME=BL-VA-IOC-01` derived from
-`IOC_ORIGINAL_LOCATION`), and symlinks `config/` into `/epics/ioc/config`. A
-successful run prints the seven progress lines from `hybrid_prepare()` in
-`src/rtems_proxy/hybrid.py`:
+exports all the env vars (including `IOC_NAME=bl19i-va-ioc-01`, taken from the
+services instance folder name — distinct from the build-tree name
+`bl-va-ioc-01` that `IOC_BUILD_NAME` derives from `IOC_ORIGINAL_LOCATION` to
+locate the `BL-VA-IOC-01.boot` binary), and symlinks `config/` into
+`/epics/ioc/config`. A successful run prints the seven progress lines from
+`hybrid_prepare()` in `src/rtems_proxy/hybrid.py`:
 
 1. `Linked instance config .../bl19i-va-ioc-01/config -> /epics/ioc/config`
 2. `Linked N ibek support YAMLs into /epics/ibek-defs`
 3. `Running: ibek runtime generate2 /epics/ioc/config --no-pvi`
 4. `ibek generate2 completed`
 5. `Running msi` → `msi expansion completed`
-6. `Placed runtime files in /ioc_nfs`
+6. `Placed runtime files in /ioc_nfs/runtime and /ioc_nfs/ioc`
 7. `Placed IOC binary at /ioc_tftp/rtems.ioc.bin`
 
-After the run, the generated artefacts should exist:
+After the run, the generated artefacts should exist, laid out under the two
+subfolders the crate's `st.cmd` expects once the export is mounted at `/epics`
+(`runtime/` for `st.cmd`, `ioc.db` and `protocol/`; `ioc/dbd/` for the dbd):
 
 ```bash
 ls /epics/runtime/st.cmd /epics/runtime/ioc.subst /epics/runtime/ioc.db
-ls /ioc_nfs/st.cmd /ioc_nfs/ioc.db
+ls /ioc_nfs/runtime/st.cmd /ioc_nfs/runtime/ioc.db /ioc_nfs/ioc/dbd
 ls /ioc_tftp/rtems.ioc.bin
 ```
 
@@ -242,6 +246,44 @@ kubectl cp \
 
 Adjust the destination path to match the uploader pod's PVC mount layout
 (typically one subdirectory per `IOC_NAME` at the PVC root).
+
+### Push the runtime files to NFS (filesystem copy, repeat on every change)
+
+The boot binary is only half of it. At boot the crate also NFS-mounts its
+per-IOC runtime export — `/dls_sw/i19/epics/rtems/bl19i-va-ioc-01` — at
+`/epics`, and reads `st.cmd`, `ioc.db`, `protocol/` and `dbd/` from there. In
+cluster mode the proxy writes straight into that export, because the `nfsv2`
+volume's `hostPath` is `/dls_sw/i19/epics/rtems` with `subPathExpr:
+$(IOC_NAME)`. In the devcontainer the proxy instead wrote to the local
+`/ioc_nfs` scratch dir, so those files have to be pushed onto the real export
+by hand.
+
+Unlike the TFTP binary push — which only repeats when you rebuild the `.boot`
+image — this copy has to be **redone every time the generated runtime changes**:
+edit the `ioc.yaml`, touch a support template, or otherwise alter `st.cmd`,
+`ioc.db` or the protocol/dbd files, and you must regenerate (step 3) and copy
+again before the crate will see it.
+
+**Empty the target first.** The runtime tree is now laid out as `runtime/`
+and `ioc/` subfolders; a previous run — or the old flat layout — can leave
+stale files behind (most dangerously an old `st.cmd` still pointing at the
+retired `/epics_rtems_root` mount), and the crate will happily boot whatever
+is there. Wipe the folder before copying so nothing stale survives:
+
+```bash
+# from somewhere with write access to the export (see the caveat below)
+rm -rf /dls_sw/i19/epics/rtems/bl19i-va-ioc-01/*
+cp -a /ioc_nfs/. /dls_sw/i19/epics/rtems/bl19i-va-ioc-01/
+```
+
+> **Caveat — split access.** This copy is awkward because no single shell
+> has both ends: inside the devcontainer you have the source (`/ioc_nfs`) but
+> `/dls_sw` is mounted **read-only**, while on the workstation you have write
+> access to `/dls_sw/i19/...` but not the devcontainer-internal `/ioc_nfs`.
+> Until the devcontainer is given a read-write mount of the per-IOC export (or
+> an NFS uploader pod is set up the way the TFTP one is), you have to bridge
+> the two — e.g. stage `/ioc_nfs` out to a shared path the workstation can
+> reach, then run the `rm`/`cp` there. This is a known rough edge.
 
 ### Drive the crate
 

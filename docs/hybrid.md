@@ -243,11 +243,13 @@ in order:
    `ioc.db` using `msi`. The macros are needed because the `.subst` file
    references templates via paths like `$(IOCSTATS)/db/iocAdminSoft.db`.
 
-6. **Copy to NFS** — rsyncs `st.cmd`, `ioc.db`, `data/` (protocol files and
-   autosave configs), and `dbd/` to `/ioc_nfs/`.
+6. **Copy to NFS** — rsyncs into two subfolders that match the paths the
+   crate's `st.cmd` reads once the export is mounted at `/epics`:
+   `runtime/` gets `st.cmd`, `ioc.db`, the `protocol/` folder (`data/*.proto*`)
+   and any autosave `*.req` files; `ioc/` gets `dbd/`.
 
-7. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/<IOC_NAME>.boot`
-   to `/ioc_tftp/rtems.ioc.bin`.
+7. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/<IOC_BUILD_NAME>.boot`
+   (the build-tree name, e.g. `BL-VA-IOC-01.boot`) to `/ioc_tftp/rtems.ioc.bin`.
 
 ### Manual debugging
 
