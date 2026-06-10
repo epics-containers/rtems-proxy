@@ -83,14 +83,13 @@ def copy_rtems(debug: bool = False):
     ioc_script_path.unlink(missing_ok=True)
     ioc_script_path.symlink_to(Path(local_nfs_root) / ioc_script_name)
 
-    # TODO for container built IOCs the name will be ioc or ioc.boot
-    # source binary is named after the build folder (IOC_BUILD_NAME), which can
-    # differ from the deployment IOC_NAME (e.g. BL-VA-IOC-01.boot deployed as
-    # bl19i-va-ioc-01)
+    # the generic-IOC project builds with a fixed PROD name 'ioc', producing the
+    # binary 'ioc' (unstripped, used for debug) and the boot image 'ioc.boot',
+    # regardless of the IOC instance name
     if debug:
-        ioc_bin = GLOBALS.IOC_BUILD_NAME.upper()
+        ioc_bin = "ioc"
     else:
-        ioc_bin = f"{GLOBALS.IOC_BUILD_NAME.upper()}.boot"
+        ioc_bin = "ioc.boot"
 
     # copy the .boot files to the TFTP root
     subprocess.run(

@@ -18,7 +18,7 @@ Three existing pieces, all already on `/dls_sw` and in the services repo:
   The historical instance definition. We will convert this into `ioc.yaml`.
 - **Generic RTEMS5 VA IOC binary tree** —
   `/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01`. The pre-built Generic IOC for
-  beamline vacuum, including the `bin/RTEMS-beatnik/BL-VA-IOC-01.boot` binary,
+  beamline vacuum, including the `bin/RTEMS-beatnik/ioc.boot` boot image,
   the `ibek-support*/` submodules, and the auto-generated `data/msi.vars`. We
   will boot from this binary and use its ibek support YAMLs. See
   [hybrid.md — The Generic IOC](hybrid.md#the-generic-ioc) for the special
@@ -187,8 +187,8 @@ rtems-proxy start --hybrid --no-connect \
 The `--instance` flag reads the two `values.yaml` files you set up in step 1,
 exports all the env vars (including `IOC_NAME=bl19i-va-ioc-01`, taken from the
 services instance folder name — distinct from the build-tree name
-`bl-va-ioc-01` that `IOC_BUILD_NAME` derives from `IOC_ORIGINAL_LOCATION` to
-locate the `BL-VA-IOC-01.boot` binary), and symlinks `config/` into
+`bl-va-ioc-01` that `IOC_BUILD_NAME` derives from `IOC_ORIGINAL_LOCATION`; the
+boot image itself now has the generic name `ioc.boot`), and symlinks `config/` into
 `/epics/ioc/config`. A successful run prints the seven progress lines from
 `hybrid_prepare()` in `src/rtems_proxy/hybrid.py`:
 
@@ -211,7 +211,7 @@ ls /ioc_tftp/rtems.ioc.bin
 ```
 
 The boot image is copied from
-`/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/bin/RTEMS-beatnik/BL-VA-IOC-01.boot`,
+`/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/bin/RTEMS-beatnik/ioc.boot`,
 so make sure the generic IOC has been built there before running this step.
 
 If any of the seven steps fail, `hybrid.md` has the per-step manual
@@ -237,10 +237,10 @@ module load ec/i19
 TFTP_POD=$(kubectl get pods -o name | grep tftp)
 
 # 2. copy the binary straight from /dls_sw into the uploader pod
-#    (source filename is BL-VA-IOC-01.boot, destination must be rtems.ioc.bin
+#    (source filename is the generic ioc.boot, destination must be rtems.ioc.bin
 #    because that's the name motBoot will request)
 kubectl cp \
-    /dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/bin/RTEMS-beatnik/BL-VA-IOC-01.boot \
+    /dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/bin/RTEMS-beatnik/ioc.boot \
     ${TFTP_POD#pod/}:/iocs/bl19i-va-ioc-01/rtems.ioc.bin
 ```
 

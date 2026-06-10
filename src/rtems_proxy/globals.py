@@ -93,12 +93,12 @@ class _Globals:
         """
 
         self.IOC_BUILD_NAME = self.IOC_ORIGINAL_LOCATION.name
-        """ the basename of the legacy build folder (IOC_ORIGINAL_LOCATION).
-            The source .boot binary is named after THIS (uppercased), which can
-            differ from IOC_NAME (the deployment/instance name), e.g. build
-            folder 'bl-va-ioc-01' -> 'BL-VA-IOC-01.boot' deployed as instance
-            'bl19i-va-ioc-01'. Use IOC_BUILD_NAME to locate source binaries and
-            IOC_NAME for TFTP/NFS/boot paths. """
+        """ the basename of the legacy build folder (IOC_ORIGINAL_LOCATION),
+            which can differ from IOC_NAME (the deployment/instance name), e.g.
+            build folder 'bl-va-ioc-01' deployed as instance 'bl19i-va-ioc-01'.
+            The generic-IOC project now builds with a fixed product name, so the
+            source binary/boot image are the generic 'ioc' / 'ioc.boot' under
+            bin/RTEMS-beatnik rather than being named after this. """
 
         self.IOC_DOMAIN = os.getenv("IOC_DOMAIN")
         """ The EPICS domain to use for this IOC, e.g. i19 """

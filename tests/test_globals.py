@@ -23,9 +23,9 @@ def test_build_name_and_ioc_name_differ(monkeypatch):
     monkeypatch.setenv("IOC_NAME", "bl19i-va-ioc-01")
     reload_globals()
     try:
-        # source binary is named after the build folder
+        # IOC_BUILD_NAME is the build folder basename (the source boot image is
+        # now the generic 'ioc.boot', so the name is no longer derived from this)
         assert GLOBALS.IOC_BUILD_NAME == "bl-va-ioc-01"
-        assert f"{GLOBALS.IOC_BUILD_NAME.upper()}.boot" == "BL-VA-IOC-01.boot"
 
         # deployment name drives the TFTP boot path and must not equal the build
         # folder name for this legacy IOC

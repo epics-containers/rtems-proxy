@@ -33,6 +33,13 @@ It has a few special additions beyond a standard EPICS IOC:
 
 - **ibek-support submodules** (`ibek-support/` and `ibek-support-dls/`) so
   that ibek support YAML versions are tracked with the IOC binary version.
+- **A generic binary name `ioc`**. rtems-proxy expects the cross-compiled
+  product to be named generically rather than after the IOC instance, so the
+  build emits `bin/RTEMS-beatnik/ioc` (the binary) and
+  `bin/RTEMS-beatnik/ioc.boot` (the boot image). To achieve this:
+  - rename the IOC main source `xxxMain.cpp` to `iocMain.cpp`
+  - edit `src/Makefile` so the product is named `ioc`, e.g.
+    `PROD_IOC = ioc` (and `ioc_SRCS += iocMain.cpp`)
 - **A modified `src/Makefile`** that collects all stream device protocol files
   into the `data/` folder, for easy protocol file path management.
 - **A Makefile rule to generate `data/msi.vars`** from `configure/RELEASE`.
@@ -248,8 +255,8 @@ in order:
    `runtime/` gets `st.cmd`, `ioc.db`, the `protocol/` folder (`data/*.proto*`)
    and any autosave `*.req` files; `ioc/` gets `dbd/`.
 
-7. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/<IOC_BUILD_NAME>.boot`
-   (the build-tree name, e.g. `BL-VA-IOC-01.boot`) to `/ioc_tftp/rtems.ioc.bin`.
+7. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/ioc.boot`
+   (the generic boot image name) to `/ioc_tftp/rtems.ioc.bin`.
 
 ### Manual debugging
 

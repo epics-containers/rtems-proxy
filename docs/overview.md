@@ -75,7 +75,10 @@ In this case the VxWorks IOC is manually ported to RTEMS and released to /dls_sw
 
 The changes required are:
 - update to EPICS v7
-- change the src/Makefile target e.g.: `PROD_IOC_RTEMS = BL06I-MO-IOC-02`
+- change the src/Makefile target to the generic name `PROD_IOC = ioc` (and
+  rename `xxxMain.cpp` to `iocMain.cpp`) so the build emits
+  `bin/RTEMS-beatnik/ioc.boot` — rtems-proxy expects this generic boot name, not
+  one derived from the IOC instance
 - make sure you are using support module versions/branches that support RTEMS5
 - rewrite the startup script to be compatible with RTEMS5
 - release to prod using `dls-release`
