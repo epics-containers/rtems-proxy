@@ -116,13 +116,55 @@ channel that relies on the default talks to a 7E2 device at 8N2 and gets no
 reply. Ports with explicit settings in `ioc.yaml` get `asynSetOption` and work;
 ports without get the wrong framing and fail.
 
-- **Watch the emit gating:** the DLS8515channel template may only emit
-  `asynSetOption` when `baud:` is present, silently dropping `parity:`/`stop:`
-  set without a baud. Diff `ioc.yaml` channel params against the actual
-  `asynSetOption` lines in st.cmd — a channel whose `parity: E` never appears in
-  st.cmd is the smoking gun. The fix is per-channel serial settings in
-  `ioc.yaml` (recovered from the original VxWorks/XmlBuilder build), and/or a
-  template fix to emit asynSetOption for parity/stop/bits independent of baud.
+- **Watch the emit gating:** a channel template may only emit `asynSetOption`
+  when `baud:` is present, silently dropping `parity:`/`stop:` set without a
+  baud. Diff `ioc.yaml` channel params against the actual `asynSetOption` lines
+  in st.cmd — a channel whose `parity: E` never appears in st.cmd is the smoking
+  gun. The fix is per-channel serial settings in `ioc.yaml` (recovered from the
+  original VxWorks/XmlBuilder build), and/or a template fix to emit asynSetOption
+  for parity/stop/bits independent of baud.
+
+- **Mapped-enum vs template mismatch (the parity bug, fixed June 2026):** ibek's
+  `ioc_factory.py::fixup_enums` renders an enum param differently depending on
+  whether its `values:` are MAPPED. `{E: even, O: odd, N: none}` → the param
+  renders as the *value* (`"even"`/`"odd"`/`"none"`); `{E:, O:, N:}` (null
+  values) → it renders as the *key* (`"E"`). DLS8515channel.parity is mapped, so
+  a template testing `parity == "E"` never matched and **no parity asynSetOption
+  was emitted** — every 7E2 gauge ran 7N2, framing errors, "No reply within
+  1000 ms". Fix in `DLS8515.ibek.support.yaml`: make both channels' parity enum
+  mapped to asyn's literal values and have the template emit
+  `asynSetOption(...,"parity","{{parity}}")` gated on `parity != "none"`. Parity
+  was the only mapped enum and the only one that broke; baud/data/stop/flow are
+  unmapped and their keys are already the literal asyn values (7,2,H,S).
+
+## Regenerating & deploying the runtime (`msi` must be on PATH)
+
+`rtems-proxy start` runs `ibek runtime generate2` then **`msi`** (EPICS macro
+expansion of the .db) then copies `runtime/` + `ioc/` to the NFS export. `msi`
+ships with epics-base but is **not on PATH by default** — without it the run
+prints `msi: command not found` / `msi expansion failed` and stops before the
+NFS copy. It lives at `/epics/epics-base/bin/linux-x86_64/msi`; this repo
+symlinks it into `.venv/bin/` (already on PATH) so the subprocess finds it.
+If that symlink is missing (e.g. venv rebuilt), recreate it or
+`export PATH=/epics/epics-base/bin/linux-x86_64:$PATH` before the run.
+
+Regen + verify a serial/template change (no crate connection needed):
+
+```bash
+rtems-proxy start --hybrid --no-connect \
+  --instance /workspaces/i19-services/services/bl19i-va-ioc-01
+# generate2 writes /epics/runtime/st.cmd; after msi the NFS copy lands at
+# /ioc_nfs/runtime/st.cmd (this is the file the crate boots).
+grep -n 'asynSetOption\|parity' /ioc_nfs/runtime/st.cmd
+```
+
+Note `/epics/ibek-defs/<MODULE>.ibek.support.yaml` is a **symlink** into the
+module's `ibek-support-*` tree (e.g.
+`/dls_sw/work/R7.0.7/ioc/BL/bl-va-ioc-01/ibek-support-dls/DLS8515/...`), so
+editing the module def is picked up by the next regen with no copy step. The
+`IOC binary not found ... .boot` message at the end is expected under
+`--no-connect` (nothing is built/booted) and does not affect the generated
+st.cmd.
 
 ## "boots but zero PVs" — a fatal iocInit step aborts before the CA server
 
