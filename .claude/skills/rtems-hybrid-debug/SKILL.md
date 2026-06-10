@@ -137,6 +137,66 @@ ports without get the wrong framing and fail.
   was the only mapped enum and the only one that broke; baud/data/stop/flow are
   unmapped and their keys are already the literal asyn values (7,2,H,S).
 
+## "findInterface asynInt32Type" on every FINS record — missing FINS port layer
+
+DLS PLC records (`dlsPLC.vacValve`/`read100`/`interlock`/`temperature`, and the
+`:ACTUALCON` ao, `:INTn:RESET` ao) use `DTYP=asynInt32` with
+`@asyn(PORT, addr, 0) FINS_DM_READ`/`FINS_DM_WRITE`. The `asynInt32` interface
+**and** the `FINS_DM_*` drvUser strings are provided by a **FINS device port**
+created by `finsDEVInit(finsPort, serialPort)` (after
+`HostlinkInterposeInit(serialPort)`) — NOT by the bare serial port. If st.cmd
+only has `drvAsynSerialPortConfigure`/`asynSetOption` for `PORT` and no
+`HostlinkInterposeInit`/`finsDEVInit`, the port is plain octet-only, so every
+FINS record fails at init:
+
+```
+<PV> devAsynInt32::initCommon findInterface asynInt32Type
+recGblRecordError: ao: init_record Error (514,11) PV: <PV>
+```
+
+These are non-fatal for iocInit (see the "boots but zero PVs" section — they do
+not abort `iocBuild`), **but the affected PVs never talk to the PLC**, so it is
+a real failure, not noise, when those PVs are the point of the IOC.
+
+Root cause seen June 2026 (bl19i-va-ioc-01): the builder2ibek conversion dropped
+the FINS port objects and set each dlsPLC entity's `port:` directly to the
+**underlying serial port** (`ty_40_5`/`ty_41_0`/`ty_41_1`/`ty_41_7`). The
+instance `ioc.yaml` had **zero** `FINS.FINSHostlink` entities. Confirm in two
+greps:
+
+```bash
+grep -ni 'FINS\|Hostlink' .../config/ioc.yaml        # broken IOC: NONE
+grep -nE 'HostlinkInterposeInit|finsDEVInit' /ioc_nfs/runtime/st.cmd  # NONE
+```
+
+A working sibling (bl15i-va-ioc-01.yaml) has one `FINS.FINSHostlink` per serial
+port carrying FINS devices, and the dlsPLC entities point at the **FINS** name,
+not the serial name:
+
+```yaml
+- type: FINS.FINSHostlink
+  asyn_port: ty_42_0       # the serial port (asyn.AsynSerial name)
+  name: TMPCC1.Hostlink    # the FINS port — MUST be a DISTINCT name
+# ...
+- type: dlsPLC.read100
+  port: TMPCC1.Hostlink    # references the FINS port, NOT ty_42_0
+```
+
+`FINS.FINSHostlink` (`FINS.ibek.support.yaml`) emits exactly:
+`HostlinkInterposeInit("{{asyn_port}}")` then
+`finsDEVInit("{{name}}", "{{asyn_port}}")`. `HostlinkInterposeInit` interposes on
+the serial port **in place**; `finsDEVInit` creates a **new** asyn port on top —
+hence the FINS name must differ from the serial name (asyn port names are
+unique).
+
+Fix (purely an instance `ioc.yaml` change — **no Generic-IOC rebuild**): for each
+serial port that carries FINS devices, add a `FINS.FINSHostlink` (distinct
+`name`, `asyn_port:` = the serial port) and repoint every dlsPLC `port:` from the
+serial name to that FINS name, then regen. The FINS driver is already linked —
+`ioc.dbd` has `registrar(finsDEVRegister)` **and**
+`registrar(HostlinkInterposeRegister)`, so the iocsh commands exist; they were
+just never called.
+
 ## Regenerating & deploying the runtime (`msi` must be on PATH)
 
 `rtems-proxy start` runs `ibek runtime generate2` then **`msi`** (EPICS macro
@@ -175,6 +235,8 @@ serves no PVs. When triaging a no-PV log, scan for a `*Build: ... Failed` /
 fatal line near `iocInit`; everything above it (asyn `findInterface` failures,
 `ao: init_record Error (514,11)`, `save_restore: Can't open file`, unregistered
 iocsh commands) is **non-fatal noise** that does not stop PVs on its own.
+(Non-fatal ≠ harmless: mass `findInterface asynInt32Type` failures mean a whole
+class of PVs is dead — see the FINS port-layer section above.)
 
 - **Foot-gun (pvlogging):** `_copy_to_nfs` stages only `runtime/` and
   `ioc/dbd/` — nothing under `/epics/support/...`. The `pvlogging` module's
@@ -184,3 +246,40 @@ iocsh commands) is **non-fatal noise** that does not stop PVs on its own.
   re-gen runtime assets (confirmed fix, June 2026). Any support module that
   needs an absolute `/epics/support/...` file at boot has the same problem —
   the file must be copied into the NFS tree too, or the feature dropped.
+
+## "registerRecordDeviceDriver failed <every recordtype>" — unreadable dbd dir
+
+A boot log where `dbLoadDatabase dbd/ioc.dbd` is immediately followed by
+`registerRecordDeviceDriver failed` for *every* recordtype (aSub, ai, ao, bi …)
+plus `registryJLinkAdd failed calc` means **pdbbase is empty** — the dbd never
+loaded. It is NOT a dbd-content or binary problem:
+
+- `registerRecordDeviceDriver failed X` (base `registryCommon.c`) fires only
+  when `dbFindRecordType(pdbbase,"X")` misses *and* `registryRecordTypeAdd`
+  already **succeeded** — so the binary's record support is linked fine; the
+  recordtype just isn't in pdbbase.
+- The real error is one line up, easily missed because it has no newline:
+  `filename="…/dbStatic/dbLexRoutines.c" line number=NNN dbRead opening file
+  dbd/ioc.dbd`. That is `dbReadCOM` reporting **`dbOpenFile()` returned NULL**
+  → `goto cleanup` → nothing parsed. The crate **could not open the file**.
+
+Root cause seen June 2026: the `ioc/dbd/` directory on the NFS export was mode
+**0750** (`drwxr-x---`). The crate NFS-mounts the export as a root-squashed /
+anonymous user, so it traverses `ioc/` (0755) but is denied entry to `dbd/` —
+open fails. `runtime/st.cmd` loads fine precisely because `runtime/` is 0755.
+The 0750 came from `_copy_to_nfs` doing `rsync -r` of the build-tree `dbd/`
+(which is 0750), and `cp -a` then propagating it to the live export.
+
+**Rule: every directory the crate reads under `/epics` must be world-traversable
+(o+rx) and every file world-readable (o+r).** Confirm with
+`namei -l /ioc_nfs/ioc/dbd/ioc.dbd` — any dir without world `x` breaks the boot.
+
+- `_copy_to_nfs` now copies dbd with `rsync -r --chmod=D755,F644` plus an
+  explicit `chmod 0755` on `ioc/` and `ioc/dbd/` (the explicit chmod is needed
+  because with a `src/` trailing slash rsync does NOT re-perm the transfer's
+  **top** destination dir, only its contents).
+- Manual one-shot repair on the live export:
+  `chmod -R a+rX /dls_sw/<bl>/epics/rtems/<ioc>` (capital `X` = add traverse to
+  dirs only, never makes data files executable), then reboot.
+- The deploy step is `cp -a /ioc_nfs/. /dls_sw/<bl>/epics/rtems/<ioc>/` — `cp -a`
+  **preserves** perms, so fixing `/ioc_nfs` then re-deploying carries the fix.

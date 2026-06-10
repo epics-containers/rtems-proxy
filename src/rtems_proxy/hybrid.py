@@ -195,13 +195,24 @@ def _copy_to_nfs():
             check=True,
         )
 
-    # ioc/dbd/: database definition loaded by 'cd /epics/ioc; dbLoadDatabase'
+    # ioc/dbd/: database definition loaded by 'cd /epics/ioc; dbLoadDatabase'.
+    # The crate NFS-mounts this tree and reads it as an anonymous (root-squashed)
+    # user, so every directory must be world-traversable and every file
+    # world-readable. The build-tree dbd/ is 0750, and rsync -r recreates it with
+    # those perms -- denying the crate entry, so dbLoadDatabase dbd/ioc.dbd fails
+    # to open, pdbbase stays empty and every record type fails to register.
+    # Force world rx on directories / world r on files (--chmod), and chmod the
+    # dir itself in case it pre-existed at 0750 from an earlier run.
     dbd_src = ioc_root / "dbd"
     if dbd_src.exists():
+        nfs_dbd = nfs_ioc / "dbd"
+        nfs_dbd.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            ["rsync", "-r", f"{dbd_src}/", f"{nfs_ioc}/dbd/"],
+            ["rsync", "-r", "--chmod=D755,F644", f"{dbd_src}/", f"{nfs_dbd}/"],
             check=True,
         )
+        nfs_ioc.chmod(0o755)
+        nfs_dbd.chmod(0o755)
 
     report(f"Placed runtime files in {nfs_runtime} and {nfs_ioc}")
 
