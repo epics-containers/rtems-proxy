@@ -95,6 +95,50 @@ When changing the runtime files on a real crate, the NFS export must be
 emptied and re-copied (stale flat files — e.g. an old st.cmd pointing at the
 retired `/epics_rtems_root` mount — will otherwise be booted).
 
+## ibek substitution foot-gun: shared `.template` -> positional row misalignment
+
+ibek (`render_db.py`) merges **every** `databases:` entry across **all** entities
+that points at the **same** `.template` path into **one** msi `pattern { … }`
+block. The header is taken from the arg-key order of the **first** entity to
+reference that file; every other entity's row values are then appended **in that
+entity's own arg order — ibek never re-keys by name**. So if two different
+`entity_model`s instantiate the same template with args in different order, the
+second's values land in the **wrong columns**, silently.
+
+- **Symptoms (at `dbLoadRecords` of the expanded `ioc.db`):**
+  `Can't set "<rec>.<FIELD>" to "<value>": Illegal choice` / `No digits to
+  convert` (a string value landed in a menu/numeric field), and garbage record
+  names like `4:SEQCCHV` (a delay/number value landed in the `device` column).
+- **Diagnose:** regenerate the subst to a scratch dir
+  (`ibek runtime generate --no-pvi <ioc.yaml> /epics/ibek-defs/*.yaml -o /tmp/x`;
+  exclude a symlinked def and pass a writable copy if you need to edit one),
+  then for each `file "…template" {` block compare the `pattern { … }` header to
+  the offending rows. A quick check: every value row must have the **same column
+  count** as the header (regex `"([^"]*)"` per row); a count mismatch = guaranteed
+  break, and equal counts can still be **semantically** swapped (e.g. SELM↔gauge).
+- **Fix:** make the wrapper model list that template's args in the **exact** order
+  of the owning module's own `entity_model`. When the owning model uses
+  `args: { .*: }` (regex = all params), the header is the entity's **full**
+  param list **including ibek's injected `type, entity_enabled` prefix** — the
+  wrapper must reproduce those two leading (ignored) columns too.
+
+### Companion foot-gun: re-instantiating a group template needs a unique device
+
+A "wrapper" model (e.g. vacuumSpace `space`/`space_b`) that re-instantiates
+another module's group template (`mks937aGaugeGroup`, `digitelMpcIonpGroup`,
+`dlsPLC_vacValveGroup`, …) must give each group a **unique device**, or the
+group's `$(device):PLOG/:P/:STA/…` records collide with the wrapper's own
+`space.template` records → `Record "…:PLOG" of type sel redefined with new type
+calc` + `dbRecordHead: tempList not empty`. The DLS builder convention
+(`vacuumSpace/etc/builder.py::_make_groups`) is `device = $(device):<COMP>G`
+(`GAUGEG`/`IONPG`/`IMGG`/`PIRGG`/`VALVEG`), and `space.template`'s
+`gauge`/`ionp`/… macros then point at those group devices (`{{ device }}:GAUGEG`)
+so the top-level space reads the group's combined output. The builder only makes
+a group when ≥2 of a component exist; an ibek model can't express that
+conditional, so the pragmatic equivalent is **always** make the group (padding
+to 8 with the first device) — collision-free and correct, at the cost of extra
+internal `:<COMP>G` PVs for single-device components.
+
 ## Generic-IOC top `Makefile` foot-guns (`.../ioc/<gen-ioc>/Makefile`)
 
 The top-level Makefile of a DLS generic IOC (e.g. `bl-va-ioc-01`) generates
