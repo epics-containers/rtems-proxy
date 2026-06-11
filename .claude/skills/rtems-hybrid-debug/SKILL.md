@@ -95,6 +95,51 @@ When changing the runtime files on a real crate, the NFS export must be
 emptied and re-copied (stale flat files — e.g. an old st.cmd pointing at the
 retired `/epics_rtems_root` mount — will otherwise be booted).
 
+## Generic-IOC top `Makefile` foot-guns (`.../ioc/<gen-ioc>/Makefile`)
+
+The top-level Makefile of a DLS generic IOC (e.g. `bl-va-ioc-01`) generates
+`data/msi.vars` and stages StreamDevice protocol files into `data/` for the NFS
+export. Three non-obvious traps, all hit June 2026:
+
+- **`data/` is `.gitignore`d** (like `bin/dbd/db/lib`), so a fresh clone lacks
+  it. Any recipe that redirects into it (`> data/msi.vars`) dies on a clean
+  build with `/bin/sh: data/...: No such file or directory`. Every such target
+  must `@mkdir -p $(@D)` (or `mkdir -p data`) as its first recipe line. Latent
+  until you build a fresh clone — an old clone where `data/` already exists
+  masks it.
+- **Top-level `DATA += ...` is DEAD.** EPICS's `DATA`/`buildInstall` install
+  mechanism only fires inside **App** dirs, **never at TOP**. A top Makefile that
+  does `DATA += $(all_protos)` (protos gathered from `$(SYS_EDM_PATHS)`, i.e.
+  every module's `data/*.proto*`) installs **nothing** → `data/` ends up with
+  only `msi.vars` → rtems-proxy's `hybrid.py` glob `data/*.proto*` finds nothing
+  → the NFS `runtime/protocol/` folder is created but **empty**. Fix: an explicit
+  `protocols` target hooked on `all` that copies the protos itself:
+  ```makefile
+  all: submodules protocols data/msi.vars
+  protocols:
+  	@mkdir -p data
+  	@for f in $(all_protos); do install -m 644 "$$f" data/; done
+  ```
+  Use `install -m 644`, **not `cp`**: prod-sourced protos are mode `555`
+  (read-only), so a second build's `cp` hits `Permission denied: cannot create
+  regular file 'data/x.protocol'` trying to overwrite the read-only dest.
+  `install` unlinks+recreates and pins a deterministic world-readable+writable
+  mode (what the NFS root-squash export needs; see the dbd-perms section).
+- **Submodule lazy-init.** `ibek-support` / `ibek-support-dls` are git
+  submodules, empty after a fresh clone, and the `configure/CONFIG` build umask
+  does NOT reach them. Hook a `submodules` target on `all` that inits **only the
+  un-checked-out ones** — a blanket `git submodule update --init` would detach an
+  already-populated submodule to its recorded SHA and **orphan local branch
+  work** in it:
+  ```makefile
+  submodules:
+  	@git submodule status | awk '/^-/ { print $$2 }' | while read p; do \
+  		git submodule update --init --recursive "$$p"; done
+  ```
+  (`git submodule status` prefixes an un-initialised submodule with `-`.)
+  Running inside a build recipe also gives the checkout the build umask (0022) →
+  world-traversable, fixing the otherwise-unreachable submodule perms.
+
 ## DLS8515/8516 serial: "port connects but device gives No reply"
 
 Distinct from "could not connect" (missing `/dev/ttyNNN` node — see the
