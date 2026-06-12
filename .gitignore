@@ -72,3 +72,6 @@ bl21i-pss-ioc-01.sh
 
 # vscode workspaces
 *.code-workspace
+
+# claude local (per-user) settings
+.claude/settings.local.json

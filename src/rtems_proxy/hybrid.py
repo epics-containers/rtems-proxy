@@ -32,6 +32,7 @@ def hybrid_prepare(instance_path: Path | None = None):
     _link_ibek_support_yamls()
     _run_ibek_generate()
     _run_msi()
+    _run_ibek_autosave()
     _copy_to_nfs()
     _copy_binary_to_tftp()
 
@@ -142,6 +143,46 @@ def _run_msi():
         raise typer.Exit(1)
 
     report("msi expansion completed")
+
+
+def _run_ibek_autosave():
+    """
+    Build the master autosave request files from the per-module *.req files.
+
+    The container build step 'ibek support generate-links' (which symlinks each
+    support module's *.req into /epics/autosave) is not part of the hybrid flow,
+    so we replicate it here from the IOC's ibek-support* folders. Then
+    'ibek runtime generate-autosave' parses runtime/ioc.subst, matches each DB
+    template stem to a <stem>_{positions,settings}.req, and uses msi to expand
+    them -- with each instance's macros -- into the two master files
+    runtime/autosave_positions.req and runtime/autosave_settings.req that the
+    generated st.cmd loads via 'create_monitor_set'.
+
+    These masters are fully expanded real files; _copy_to_nfs picks them up from
+    runtime/*.req. The /epics/autosave symlinks are msi inputs only and never
+    reach NFS.
+    """
+    autosave_dir = GLOBALS.EPICS_ROOT / "autosave"
+    autosave_dir.mkdir(parents=True, exist_ok=True)
+
+    ioc_root = GLOBALS.IOC_ORIGINAL_LOCATION
+    req_files = list(ioc_root.glob("ibek-support*/*/*.req"))
+    for req in req_files:
+        link = autosave_dir / req.name
+        if link.exists() or link.is_symlink():
+            link.unlink()
+        link.symlink_to(req)
+    report(f"Linked {len(req_files)} autosave req files into {autosave_dir}")
+
+    subst = GLOBALS.RUNTIME / "ioc.subst"
+    cmd = ["ibek", "runtime", "generate-autosave", str(subst)]
+    report(f"Running: {' '.join(cmd)}")
+    result = subprocess.run(cmd, check=False)
+    if result.returncode != 0:
+        typer.echo("ibek runtime generate-autosave failed")
+        raise typer.Exit(1)
+
+    report("ibek generate-autosave completed")
 
 
 def _copy_to_nfs():
