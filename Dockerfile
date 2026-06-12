@@ -34,8 +34,8 @@ RUN mkdir -p /epics/ioc /epics/runtime /ioc_tftp /ioc_nfsv2
 # be writable+traversable by all (the symlink unlink/create needs w+x on the
 # dir, not just r). Mounted volumes (/ioc_nfs, /ioc_tftp) get write access from
 # the pod securityContext, not here.
-RUN mkdir -p /epics/ibek-defs /epics/runtime \
-    && chmod a+rwx /epics/ibek-defs /epics/runtime
+RUN mkdir -p /epics/ibek-defs /epics/runtime /epics/autosave \
+    && chmod a+rwx /epics/ibek-defs /epics/runtime /epics/autosave
 
 # The runtime stage copies the built venv into a runtime container
 FROM ghcr.io/epics-containers/epics-base-runtime:7.0.10ec1 AS runtime
@@ -55,8 +55,8 @@ ENV PATH=/app/.venv/bin:$PATH
 # rtems-proxy rewrites the ibek-defs symlink farm and generates runtime assets
 # at start time as a non-root user in the cluster, so these dirs must be
 # writable+traversable by all (symlink unlink/create needs w+x on the dir).
-RUN mkdir -p /epics/ibek-defs /epics/runtime \
-    && chmod a+rwx /epics/ibek-defs /epics/runtime
+RUN mkdir -p /epics/ibek-defs /epics/runtime /epics/autosave \
+    && chmod a+rwx /epics/ibek-defs /epics/runtime /epics/autosave
 
 # change this entrypoint if it is not the same as the repo
 ENTRYPOINT ["rtems-proxy"]
