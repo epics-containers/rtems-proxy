@@ -70,7 +70,7 @@ Diff a working sibling against the broken one (`nm "$F" | grep -i 8515` vs
 ibek's `st.cmd.jinja` renders fixed paths the crate reads after mounting its
 export at `/epics`:
 
-```
+```text
 cd "{{ get_env('IOC') }}"                       -> /epics/ioc
 dbLoadDatabase dbd/ioc.dbd                       -> /epics/ioc/dbd/ioc.dbd
 STREAM_PROTOCOL_PATH /epics/runtime/protocol/
@@ -167,8 +167,9 @@ export. Three non-obvious traps, all hit June 2026:
   Use `install -m 644`, **not `cp`**: prod-sourced protos are mode `555`
   (read-only), so a second build's `cp` hits `Permission denied: cannot create
   regular file 'data/x.protocol'` trying to overwrite the read-only dest.
-  `install` unlinks+recreates and pins a deterministic world-readable+writable
-  mode (what the NFS root-squash export needs; see the dbd-perms section).
+  `install` unlinks+recreates and pins a deterministic owner-writable,
+  world-readable mode (0644) (what the NFS root-squash export needs; see the
+  dbd-perms section).
 - **Submodule lazy-init.** `ibek-support` / `ibek-support-dls` are git
   submodules, empty after a fresh clone, and the `configure/CONFIG` build umask
   does NOT reach them. Hook a `submodules` target on `all` that inits **only the
@@ -238,7 +239,7 @@ only has `drvAsynSerialPortConfigure`/`asynSetOption` for `PORT` and no
 `HostlinkInterposeInit`/`finsDEVInit`, the port is plain octet-only, so every
 FINS record fails at init:
 
-```
+```text
 <PV> devAsynInt32::initCommon findInterface asynInt32Type
 recGblRecordError: ao: init_record Error (514,11) PV: <PV>
 ```
