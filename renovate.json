@@ -8,6 +8,10 @@
     "enabled": true,
     "automerge": true
   },
+  "git-submodules": {
+    "description": "Track ibek-support* submodules on their main branch so a PR (running the hybrid e2e tests) is raised whenever they move forward",
+    "enabled": true
+  },
   "packageRules": [
     {
       "description": "Disable python version as that is managed by python-copier-template",

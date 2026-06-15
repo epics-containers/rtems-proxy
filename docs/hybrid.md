@@ -337,3 +337,12 @@ invoking `msi`.
 For an end-to-end walkthrough using a concrete instance (BL19I vacuum IOC,
 from VxWorks builder XML through devcontainer testing to a cluster deploy),
 see [example-bl19i-va-ioc-01.md](example-bl19i-va-ioc-01.md).
+
+## Testing
+
+The hybrid pipeline is covered by golden-file end-to-end tests that convert a
+real IOC's builder XML all the way to the `/ioc_nfs` layout and compare the
+generated `st.cmd`/`ioc.subst` against committed baselines. For how those work —
+and the regenerate → review → redeploy workflow for keeping them honest as
+`ibek-support*` and `builder2ibek` move forward — see
+[hybrid-testing.md](hybrid-testing.md).

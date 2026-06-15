@@ -43,6 +43,14 @@ wheels = [
 ]
 
 [[package]]
+name = "builder2ibek"
+version = "2.0.3.dev16+g99108f122"
+source = { git = "https://github.com/epics-containers/builder2ibek.git?rev=99108f122994570fb043e7fc5c6ae706ed8d3c21#99108f122994570fb043e7fc5c6ae706ed8d3c21" }
+dependencies = [
+    { name = "ibek" },
+]
+
+[[package]]
 name = "cachetools"
 version = "7.0.6"
 source = { registry = "https://pypi.org/simple" }
@@ -813,6 +821,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+ci = [
+    { name = "builder2ibek" },
+]
 dev = [
     { name = "copier" },
     { name = "pre-commit" },
@@ -836,6 +847,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+ci = [{ name = "builder2ibek", git = "https://github.com/epics-containers/builder2ibek.git?rev=99108f122994570fb043e7fc5c6ae706ed8d3c21" }]
 dev = [
     { name = "copier" },
     { name = "pre-commit" },

@@ -36,6 +36,22 @@ dev = [
     "tox-uv",
     "types-mock",
 ]
+# CI-only: builder2ibek converts the sample builder XML to ioc.yaml in the
+# hybrid end-to-end tests (tests/test_hybrid.py). Pinned so a new builder2ibek
+# arrives as a reviewable Renovate PR that runs these tests -- catching
+# incompatibilities and attributing them to a specific bump. See
+# docs/hybrid-testing.md.
+# TEMPORARY git pin (99108f1): builder2ibek's hostlink-interpose fix is not yet
+# released; move to a PyPI version once it ships.
+ci = [
+    "builder2ibek @ git+https://github.com/epics-containers/builder2ibek.git@99108f122994570fb043e7fc5c6ae706ed8d3c21",
+]
+
+[tool.uv]
+# install the ci group (builder2ibek) alongside dev so the hybrid e2e tests can
+# run under `uv run`/tox; it is kept a separate group so it is easy to drop and
+# is excluded from the published wheel's dependencies.
+default-groups = ["dev", "ci"]
 
 [project.scripts]
 rtems-proxy = "rtems_proxy.__main__:cli"
