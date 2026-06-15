@@ -12,14 +12,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
   exit 1
 fi
 
-export RTEMS_TFTP_IP=/ioc_tftp
+export RTEMS_TFTP_PATH=/ioc_tftp
 export RTEMS_NFS_PATH=/epics
-mkdir -p $RTEMS_NFS_PATH
-mkdir -p $RTEMS_TFTP_PATH
+mkdir -p "$RTEMS_NFS_PATH"
+mkdir -p "$RTEMS_TFTP_PATH"
 
 # validate we have the essential environment variables
-if [[ -z "$RTEMS_TFTP_IP"  || -z "$IOC_NAME" || -z "$RTEMS_NFS_IP" ]]; then
-  echo "RTEMS_TFTP_IP,IOC_NAME,RTEMS_NFS_IP must all be set"
+if [[ -z "$RTEMS_TFTP_IP" || -z "$RTEMS_TFTP_PATH" || -z "$IOC_NAME" || -z "$RTEMS_NFS_IP" ]]; then
+  echo "RTEMS_TFTP_IP,RTEMS_TFTP_PATH,IOC_NAME,RTEMS_NFS_IP must all be set"
   return 1
 fi
 
