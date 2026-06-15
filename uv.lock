@@ -44,10 +44,14 @@ wheels = [
 
 [[package]]
 name = "builder2ibek"
-version = "2.0.3.dev16+g99108f122"
-source = { git = "https://github.com/epics-containers/builder2ibek.git?rev=99108f122994570fb043e7fc5c6ae706ed8d3c21#99108f122994570fb043e7fc5c6ae706ed8d3c21" }
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ibek" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f6/89/2df11fb0d2f70be2e1e8039832afc41ef564cf5d00325cf445ea0f822173/builder2ibek-2.1.0.tar.gz", hash = "sha256:7dc775948fbe0283ae599aa378575a1b356caab1b499c945e9b8e502e3282c3f", size = 891427, upload-time = "2026-06-15T16:18:34.612Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/c6/5ddfea12aeeb5071a59a2837094ba7d15c3b90d3ec0d380040167df929a9/builder2ibek-2.1.0-py3-none-any.whl", hash = "sha256:7979cc08f1ae1de2689c587383dccc57e0028bca73317f4ada77b6e877874a54", size = 105613, upload-time = "2026-06-15T16:18:33.626Z" },
 ]
 
 [[package]]
@@ -847,7 +851,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-ci = [{ name = "builder2ibek", git = "https://github.com/epics-containers/builder2ibek.git?rev=99108f122994570fb043e7fc5c6ae706ed8d3c21" }]
+ci = [{ name = "builder2ibek", specifier = "==2.1.0" }]
 dev = [
     { name = "copier" },
     { name = "pre-commit" },

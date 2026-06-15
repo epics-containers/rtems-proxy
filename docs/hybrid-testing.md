@@ -78,11 +78,10 @@ are pinned, and bumped deliberately:
 
 ### Where the hybrid tests run
 
-`ibek-support-dls` lives on internal GitLab, and `builder2ibek` is currently
-pinned to a git commit (uv clones a git source *with its submodules*, and
-builder2ibek itself vendors `ibek-support-dls`). Neither can be fetched from a
-public GitHub runner. So the hybrid tests are designed to run on a
-**DLS-internal runner / devcontainer** and to **skip cleanly elsewhere**:
+`ibek-support-dls` lives on internal GitLab, so the DLS support definitions the
+sample vacuum IOCs need cannot be fetched from a public GitHub runner. The
+hybrid tests are therefore designed to run on a **DLS-internal runner /
+devcontainer** and to **skip cleanly elsewhere**:
 
 - they are gated by `requires_dls` (is `ibek-support-dls` checked out?) and
   `requires_builder2ibek` (is `builder2ibek` installed?);
@@ -95,9 +94,8 @@ public GitHub runner. So the hybrid tests are designed to run on a
   uv run --group ci pytest tests/test_hybrid.py
   ```
 
-Once `builder2ibek` is released to PyPI the git pin becomes a version pin;
-wheels carry no submodules, so at that point the only thing keeping the tests
-internal is `ibek-support-dls` itself.
+`builder2ibek` is a normal PyPI dependency, so it installs anywhere — the only
+thing keeping these tests internal is the `ibek-support-dls` submodule.
 
 ### The contract: forward-moving and backward-compatible
 
