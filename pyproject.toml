@@ -36,6 +36,15 @@ dev = [
     "tox-uv",
     "types-mock",
 ]
+# builder2ibek converts the sample builder XML to ioc.yaml in the hybrid e2e
+# tests (tests/test_hybrid.py). Kept in a non-default group: the tests need the
+# internal-GitLab ibek-support-dls definitions, so they only run on a
+# DLS-internal runner / devcontainer (see docs/hybrid-testing.md). Pinned so a
+# new builder2ibek arrives as a reviewable Renovate PR that runs these tests.
+# Run the hybrid tests with:  uv run --group ci pytest tests/test_hybrid.py
+ci = [
+    "builder2ibek==2.1.0",
+]
 
 [project.scripts]
 rtems-proxy = "rtems_proxy.__main__:cli"

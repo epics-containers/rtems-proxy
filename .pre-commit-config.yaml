@@ -31,6 +31,17 @@ repos:
         entry: uv sync
         files: ^(uv\.lock|pyproject\.toml)$
 
+      # The hybrid e2e tests need DLS-internal GitLab (ibek-support-dls) and so
+      # are SKIPPED on public CI -- run them locally for real coverage. verbose
+      # makes pre-commit print this even though the hook always passes.
+      - id: run-tests-locally
+        name: reminder to run tests locally
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        language: system
+        entry: "bash -c 'echo \"NOTE: run the tests locally -- they are more informative than CI. The hybrid IOC tests need DLS GitLab access (ibek-support-dls) and are skipped on public CI. Run: uv run --group ci pytest\"'"
+
   # TODO restore this when go.org is available at DLS again
   # - repo: https://github.com/gitleaks/gitleaks
   #   rev: v8.28.0
