@@ -70,15 +70,34 @@ are pinned, and bumped deliberately:
   installed `builder2ibek` does **not** read them). They are configured to track
   `main` so Renovate's `git-submodules` manager opens a PR each time `main`
   advances, runs these tests on the bump, and gives you a reviewable diff.
-- **`builder2ibek` is a pinned CI-only dependency** (see `[dependency-groups]`
-  in `pyproject.toml`), not `uvx builder2ibek`. Pinning means a new release
-  arrives as a Renovate PR that *runs these tests* — so an incompatible change
-  is caught and **attributed to a specific version bump**, instead of silently
-  turning CI red with nothing to point at.
+- **`builder2ibek` is pinned in a non-default `ci` dependency group** (see
+  `[dependency-groups]` in `pyproject.toml`), not `uvx builder2ibek`. Pinning
+  means a new release arrives as a Renovate PR that *runs these tests* — so an
+  incompatible change is caught and **attributed to a specific version bump**,
+  instead of silently turning CI red with nothing to point at.
 
-`ibek-support-dls` lives on internal GitLab. The sample vacuum IOCs need its
-DLS-specific modules, so the tests are **skipped** (`requires_dls`) wherever it
-is not checked out — e.g. public CI.
+### Where the hybrid tests run
+
+`ibek-support-dls` lives on internal GitLab, and `builder2ibek` is currently
+pinned to a git commit (uv clones a git source *with its submodules*, and
+builder2ibek itself vendors `ibek-support-dls`). Neither can be fetched from a
+public GitHub runner. So the hybrid tests are designed to run on a
+**DLS-internal runner / devcontainer** and to **skip cleanly elsewhere**:
+
+- they are gated by `requires_dls` (is `ibek-support-dls` checked out?) and
+  `requires_builder2ibek` (is `builder2ibek` installed?);
+- the default `tox -e tests` env does **not** install the `ci` group, so on
+  public CI the hybrid tests skip and only `test_cli`/`test_globals` run;
+- to actually run them (where GitLab is reachable):
+
+  ```bash
+  git submodule update --init        # ibek-support + ibek-support-dls
+  uv run --group ci pytest tests/test_hybrid.py
+  ```
+
+Once `builder2ibek` is released to PyPI the git pin becomes a version pin;
+wheels carry no submodules, so at that point the only thing keeping the tests
+internal is `ibek-support-dls` itself.
 
 ### The contract: forward-moving and backward-compatible
 

@@ -9,6 +9,7 @@ submodule, so tests are skipped when it is not available (e.g. public CI).
 """
 
 import os
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -26,9 +27,20 @@ IBEK_SUPPORT_DLS = REPO_ROOT / "ibek-support-dls"
 # skip rather than report a spurious failure (mirrors builder2ibek's approach).
 HAS_DLS_SUPPORT = any(IBEK_SUPPORT_DLS.glob("*/*.ibek.support.yaml"))
 
+# builder2ibek is in the (non-default) `ci` dependency group, installed only
+# where these tests run -- a DLS-internal runner / devcontainer. It is absent
+# in the default `tests` env and on public CI (where it could not be installed
+# anyway -- see pyproject [dependency-groups] ci), so gate on it too.
+HAS_BUILDER2IBEK = shutil.which("builder2ibek") is not None
+
 requires_dls = pytest.mark.skipif(
     not HAS_DLS_SUPPORT,
     reason="ibek-support-dls submodule not checked out (internal GitLab)",
+)
+
+requires_builder2ibek = pytest.mark.skipif(
+    not HAS_BUILDER2IBEK,
+    reason="builder2ibek not installed (run with: uv run --group ci pytest)",
 )
 
 

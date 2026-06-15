@@ -26,13 +26,19 @@ from pathlib import Path
 import pytest
 
 from rtems_proxy.globals import GLOBALS, reload_globals
-from tests.conftest import SAMPLES, requires_dls, run_builder2ibek
+from tests.conftest import (
+    SAMPLES,
+    requires_builder2ibek,
+    requires_dls,
+    run_builder2ibek,
+)
 
 SAMPLE_XMLS = sorted(SAMPLES.glob("*.xml"))
 SAMPLE_IDS = [x.stem for x in SAMPLE_XMLS]
 
 
 @requires_dls
+@requires_builder2ibek
 @pytest.mark.parametrize("sample_xml", SAMPLE_XMLS, ids=SAMPLE_IDS)
 def test_hybrid_generate(
     sample_xml: Path,

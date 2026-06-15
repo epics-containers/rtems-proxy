@@ -36,22 +36,21 @@ dev = [
     "tox-uv",
     "types-mock",
 ]
-# CI-only: builder2ibek converts the sample builder XML to ioc.yaml in the
-# hybrid end-to-end tests (tests/test_hybrid.py). Pinned so a new builder2ibek
-# arrives as a reviewable Renovate PR that runs these tests -- catching
-# incompatibilities and attributing them to a specific bump. See
-# docs/hybrid-testing.md.
+# builder2ibek converts the sample builder XML to ioc.yaml in the hybrid e2e
+# tests (tests/test_hybrid.py). It is NOT a default group: those tests need the
+# internal-GitLab ibek-support-dls definitions and so only run on a DLS-internal
+# runner / devcontainer (see docs/hybrid-testing.md). Installing it elsewhere
+# would fail anyway -- it is pinned to a git commit and uv clones a git source
+# *with its submodules*, and builder2ibek vendors ibek-support-dls, which a
+# public runner cannot reach. Pin it so a new builder2ibek arrives as a
+# reviewable Renovate PR that runs these tests.
+# Run the hybrid tests with:  uv run --group ci pytest tests/test_hybrid.py
 # TEMPORARY git pin (99108f1): builder2ibek's hostlink-interpose fix is not yet
-# released; move to a PyPI version once it ships.
+# released; move to a PyPI version once it ships (which also lets these tests
+# run anywhere, as wheels carry no submodules).
 ci = [
     "builder2ibek @ git+https://github.com/epics-containers/builder2ibek.git@99108f122994570fb043e7fc5c6ae706ed8d3c21",
 ]
-
-[tool.uv]
-# install the ci group (builder2ibek) alongside dev so the hybrid e2e tests can
-# run under `uv run`/tox; it is kept a separate group so it is easy to drop and
-# is excluded from the published wheel's dependencies.
-default-groups = ["dev", "ci"]
 
 [project.scripts]
 rtems-proxy = "rtems_proxy.__main__:cli"
