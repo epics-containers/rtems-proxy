@@ -42,7 +42,7 @@ def _link_instance_config(instance_path: Path):
     Symlink the instance config directory into IOC_CONFIG_PATH so ibek
     can discover ioc.yaml — replaces the manual 'ibek dev instance' step.
     """
-    config_src = instance_path / "config"
+    config_src = (instance_path / "config").resolve()
     if not config_src.exists():
         typer.echo(f"No config directory found at {config_src}")
         raise typer.Exit(1)
@@ -56,7 +56,7 @@ def _link_instance_config(instance_path: Path):
         shutil.rmtree(config_dst)
 
     config_dst.parent.mkdir(parents=True, exist_ok=True)
-    config_dst.symlink_to(config_src)
+    config_dst.symlink_to(config_src, target_is_directory=True)
     report(f"Linked instance config {config_src} -> {config_dst}")
 
 
