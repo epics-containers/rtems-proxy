@@ -250,12 +250,19 @@ in order:
    `ioc.db` using `msi`. The macros are needed because the `.subst` file
    references templates via paths like `$(IOCSTATS)/db/iocAdminSoft.db`.
 
-6. **Copy to NFS** — rsyncs into two subfolders that match the paths the
+6. **Run `ibek runtime generate-autosave`** — symlinks every `*.req` file from
+   `$IOC_ORIGINAL_LOCATION/ibek-support*/*/` into `/epics/autosave`, then parses
+   `ioc.subst`, matches each DB template stem to its `*.req` files and expands
+   them with each instance's macros (via `msi`) into the master
+   `autosave_positions.req` and `autosave_settings.req` in `/epics/runtime/`.
+   The generated `st.cmd` loads these via `create_monitor_set`.
+
+7. **Copy to NFS** — rsyncs into two subfolders that match the paths the
    crate's `st.cmd` reads once the export is mounted at `/epics`:
    `runtime/` gets `st.cmd`, `ioc.db`, the `protocol/` folder (`data/*.proto*`)
    and any autosave `*.req` files; `ioc/` gets `dbd/`.
 
-7. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/ioc.boot`
+8. **Copy binary to TFTP** — copies `$IOC_ORIGINAL_LOCATION/bin/RTEMS-beatnik/ioc.boot`
    (the generic boot image name) to `/ioc_tftp/rtems.ioc.bin`.
 
 ### Manual debugging
@@ -278,8 +285,14 @@ ibek runtime generate2 /epics/ioc/config --no-pvi
 source $IOC_ORIGINAL_LOCATION/data/msi.vars
 eval "msi -o/epics/runtime/ioc.db ${MSI_INCLUDES} -I/epics/runtime -S/epics/runtime/ioc.subst"
 
-# 4. Verify outputs
-ls /epics/runtime/st.cmd /epics/runtime/ioc.subst /epics/runtime/ioc.db
+# 4. Build the master autosave request files
+mkdir -p /epics/autosave
+ln -srf $IOC_ORIGINAL_LOCATION/ibek-support*/*/*.req /epics/autosave/
+ibek runtime generate-autosave /epics/runtime/ioc.subst
+
+# 5. Verify outputs
+ls /epics/runtime/st.cmd /epics/runtime/ioc.subst /epics/runtime/ioc.db \
+   /epics/runtime/autosave_positions.req /epics/runtime/autosave_settings.req
 ```
 
 ## Troubleshooting
