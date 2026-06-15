@@ -105,10 +105,7 @@ def _run_ibek_generate():
 
     cmd = ["ibek", "runtime", "generate2", str(config_dir), "--no-pvi"]
     report(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, check=False, env=env)
-    if result.returncode != 0:
-        typer.echo("ibek runtime generate2 failed")
-        raise typer.Exit(1)
+    _run_checked(cmd, "ibek runtime generate2 failed", env=env)
 
     for expected in ["st.cmd", "ioc.subst"]:
         if not (GLOBALS.RUNTIME / expected).exists():
@@ -133,10 +130,7 @@ def _run_msi():
         f"msi -o{runtime}/ioc.db $MSI_INCLUDES -I{runtime} -S{runtime}/ioc.subst"
     )
     report("Running msi")
-    result = subprocess.run(["bash", "-c", cmd], check=False)
-    if result.returncode != 0:
-        typer.echo("msi expansion failed")
-        raise typer.Exit(1)
+    _run_checked(["bash", "-c", cmd], "msi expansion failed")
 
     if not (GLOBALS.RUNTIME / "ioc.db").exists():
         typer.echo(f"msi did not produce {GLOBALS.RUNTIME / 'ioc.db'}")
@@ -177,18 +171,15 @@ def _run_ibek_autosave():
     subst = GLOBALS.RUNTIME / "ioc.subst"
     cmd = ["ibek", "runtime", "generate-autosave", str(subst)]
     report(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, check=False)
-    if result.returncode != 0:
-        typer.echo("ibek runtime generate-autosave failed")
-        raise typer.Exit(1)
+    _run_checked(cmd, "ibek runtime generate-autosave failed")
 
     report("ibek generate-autosave completed")
 
 
-def _run_checked(cmd: list[str], err_msg: str):
+def _run_checked(cmd: list[str], err_msg: str, **kwargs):
     """Run a subprocess, converting failure to a controlled typer.Exit(1)."""
     try:
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, check=False, **kwargs)
     except FileNotFoundError as e:
         typer.echo(f"{err_msg}: {e}")
         raise typer.Exit(1) from None
