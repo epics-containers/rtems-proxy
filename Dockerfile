@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ENV PATH=/app/.venv/bin:$PATH
 
 # Create directories for hybrid mode compatibility in devcontainers
-RUN mkdir -p /epics/ioc /epics/runtime /ioc_tftp /ioc_nfsv2
+RUN mkdir -p /epics/ioc /epics/runtime /ioc_tftp /ioc_nfs
 
 # rtems-proxy rewrites the ibek-defs symlink farm and generates runtime assets
 # at start time. In the cluster it runs as a non-root user, so these dirs must
