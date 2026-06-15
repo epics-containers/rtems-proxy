@@ -185,6 +185,18 @@ def _run_ibek_autosave():
     report("ibek generate-autosave completed")
 
 
+def _run_checked(cmd: list[str], err_msg: str):
+    """Run a subprocess, converting failure to a controlled typer.Exit(1)."""
+    try:
+        result = subprocess.run(cmd, check=False)
+    except FileNotFoundError as e:
+        typer.echo(f"{err_msg}: {e}")
+        raise typer.Exit(1) from None
+    if result.returncode != 0:
+        typer.echo(err_msg)
+        raise typer.Exit(1)
+
+
 def _copy_to_nfs():
     """
     Place runtime files into the NFS root under two subfolders that match the
@@ -208,13 +220,11 @@ def _copy_to_nfs():
     nfs_ioc.mkdir(parents=True, exist_ok=True)
 
     # runtime/: startup script and the expanded database
-    subprocess.run(
-        ["rsync", f"{runtime}/st.cmd", f"{nfs_runtime}/"],
-        check=True,
+    _run_checked(
+        ["rsync", f"{runtime}/st.cmd", f"{nfs_runtime}/"], "Failed to copy st.cmd"
     )
-    subprocess.run(
-        ["rsync", f"{runtime}/ioc.db", f"{nfs_runtime}/"],
-        check=True,
+    _run_checked(
+        ["rsync", f"{runtime}/ioc.db", f"{nfs_runtime}/"], "Failed to copy ioc.db"
     )
 
     # runtime/protocol/: StreamDevice protocol files (data/*.proto*)
@@ -222,18 +232,18 @@ def _copy_to_nfs():
     protocol_dir.mkdir(parents=True, exist_ok=True)
     proto_files = list((ioc_root / "data").glob("*.proto*"))
     if proto_files:
-        subprocess.run(
+        _run_checked(
             ["rsync"] + [str(f) for f in proto_files] + [f"{protocol_dir}/"],
-            check=True,
+            "Failed to copy protocol files",
         )
 
     # runtime/: autosave request files -- st.cmd searches /epics/runtime for
     # them via set_requestfile_path("/epics", "runtime")
     req_files = list(Path(runtime).glob("*.req"))
     if req_files:
-        subprocess.run(
+        _run_checked(
             ["rsync"] + [str(f) for f in req_files] + [f"{nfs_runtime}/"],
-            check=True,
+            "Failed to copy autosave req files",
         )
 
     # ioc/dbd/: database definition loaded by 'cd /epics/ioc; dbLoadDatabase'.
@@ -249,9 +259,8 @@ def _copy_to_nfs():
     if dbd_src.exists():
         nfs_dbd = nfs_ioc / "dbd"
         nfs_dbd.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            ["rsync", "-r", f"{dbd_src}/", f"{nfs_dbd}/"],
-            check=True,
+        _run_checked(
+            ["rsync", "-r", f"{dbd_src}/", f"{nfs_dbd}/"], "Failed to copy dbd files"
         )
 
     report(f"Placed runtime files in {nfs_runtime} and {nfs_ioc}")
@@ -271,10 +280,7 @@ def _copy_binary_to_tftp():
         typer.echo(f"IOC binary not found at {ioc_bin_src}")
         raise typer.Exit(1)
 
-    subprocess.run(
-        ["rsync", str(ioc_bin_src), f"{tftp}/"],
-        check=True,
-    )
+    _run_checked(["rsync", str(ioc_bin_src), f"{tftp}/"], "Failed to copy IOC binary")
 
     tftp_target = Path(tftp) / GLOBALS.RTEMS_BINARY_DEFAULT_NAME
     tftp_target.unlink(missing_ok=True)
