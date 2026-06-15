@@ -16,7 +16,10 @@ def save_current_version():
 
     We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
     """
-    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    version_file = (
+        Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "runtime" / "rtems_proxy_version.txt"
+    )
+    version_file.parent.mkdir(parents=True, exist_ok=True)
     with open(version_file, "w") as vf:
         vf.write(str(GLOBALS.IOC_ORIGINAL_LOCATION) + "\n")
 
@@ -28,7 +31,9 @@ def check_new_version():
 
     We use the env IOC_ORIGINAL_LOCATION as a proxy for the version string
     """
-    version_file = Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "rtems_proxy_version.txt"
+    version_file = (
+        Path(GLOBALS.RTEMS_NFS_ROOT_PATH) / "runtime" / "rtems_proxy_version.txt"
+    )
     if not version_file.exists():
         return True
 
@@ -44,10 +49,6 @@ def copy_rtems(debug: bool = False):
     can access them
     """
 
-    # TODO - this function is currently specific to legacy built IOCs
-    # TODO - once IOCs are built in containers review this function to make it
-    # TODO   work for both legacy and container built IOCs (it might just work?)
-
     # these represent where the rtems-proxy container mounts the IOC NFS and TFTP
     # shares
     local_tftp_root = GLOBALS.RTEMS_TFTP_ROOT_PATH
@@ -55,18 +56,18 @@ def copy_rtems(debug: bool = False):
 
     sts = list(Path(GLOBALS.IOC_ORIGINAL_LOCATION).glob("bin/RTEMS-beatnik/st*"))
     if len(sts) == 0:
-        raise FileNotFoundError(
-            f"No RTEMS startup script found at "
-            f"{GLOBALS.IOC_ORIGINAL_LOCATION}/bin/RTEMS-beatnik/st*"
-        )
-    ioc_script_name = sts[0].name
+        ioc_script_name = "st.cmd"
+    else:
+        ioc_script_name = sts[0].name
 
     # copy the IOC runtime files to the NFS root
+    # Note --ignore-missing-args as the 'Hybrid' IOC wont have /db or startup script
     os.chdir(GLOBALS.IOC_ORIGINAL_LOCATION)
     subprocess.run(
         [
             "rsync",
             "--delete",
+            "--ignore-missing-args",
             "-r",
             "data",
             "db",
@@ -82,11 +83,13 @@ def copy_rtems(debug: bool = False):
     ioc_script_path.unlink(missing_ok=True)
     ioc_script_path.symlink_to(Path(local_nfs_root) / ioc_script_name)
 
-    # TODO for container built IOCs the name will be ioc or ioc.boot
+    # the generic-IOC project builds with a fixed PROD name 'ioc', producing the
+    # binary 'ioc' (unstripped, used for debug) and the boot image 'ioc.boot',
+    # regardless of the IOC instance name
     if debug:
-        ioc_bin = GLOBALS.IOC_NAME.upper()
+        ioc_bin = "ioc"
     else:
-        ioc_bin = f"{GLOBALS.IOC_NAME.upper()}.boot"
+        ioc_bin = "ioc.boot"
 
     # copy the .boot files to the TFTP root
     subprocess.run(

@@ -29,6 +29,13 @@ jobs:
       - name: Check for packaging errors
         run: uvx twine check --strict dist/*
 
+      - name: Setup Python
+        # the runner's default python may be older than requires-python in
+        # pyproject.toml; pin to a supported version for the install/run checks
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
       - name: Install produced wheel
         run: python -m pip install dist/*.whl
 

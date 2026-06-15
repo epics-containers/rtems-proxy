@@ -1,6 +1,6 @@
-# The devcontainer should use the developer target and run as root with podman
-# or docker with user namespaces.
-FROM ghcr.io/diamondlightsource/ubuntu-devcontainer:noble AS developer
+# This container is bases on epics-base so that we have access to the msi tool
+# and CA client tools for diagnostics.
+FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec1 AS developer
 
 # Add any system dependencies for the developer/build environment here
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
@@ -26,10 +26,21 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ENV PATH=/app/.venv/bin:$PATH
 
-# The runtime stage copies the built venv into a runtime container
-FROM ubuntu:noble AS runtime
+# Create directories for hybrid mode compatibility in devcontainers
+RUN mkdir -p /epics/ioc /epics/runtime /ioc_tftp /ioc_nfs
 
-# Add apt-get system dependecies for runtime here if needed
+# rtems-proxy rewrites the ibek-defs symlink farm and generates runtime assets
+# at start time. In the cluster it runs as a non-root user, so these dirs must
+# be writable+traversable by all (the symlink unlink/create needs w+x on the
+# dir, not just r). Mounted volumes (/ioc_nfs, /ioc_tftp) get write access from
+# the pod securityContext, not here.
+RUN mkdir -p /epics/ibek-defs /epics/runtime /epics/autosave \
+    && chmod a+rwx /epics/ibek-defs /epics/runtime /epics/autosave
+
+# The runtime stage copies the built venv into a runtime container
+FROM ghcr.io/epics-containers/epics-base-runtime:7.0.10ec1 AS runtime
+
+# Add apt-get system dependencies for runtime here if needed
 # RUN apt-get update -y && apt-get install -y --no-install-recommends \
 #     some-library \
 #     && apt-get dist-clean
@@ -40,6 +51,12 @@ COPY --from=build /python /python
 # Copy the environment, but not the source code
 COPY --from=build /app/.venv /app/.venv
 ENV PATH=/app/.venv/bin:$PATH
+
+# rtems-proxy rewrites the ibek-defs symlink farm and generates runtime assets
+# at start time as a non-root user in the cluster, so these dirs must be
+# writable+traversable by all (symlink unlink/create needs w+x on the dir).
+RUN mkdir -p /epics/ibek-defs /epics/runtime /epics/autosave \
+    && chmod a+rwx /epics/ibek-defs /epics/runtime /epics/autosave
 
 # change this entrypoint if it is not the same as the repo
 ENTRYPOINT ["rtems-proxy"]

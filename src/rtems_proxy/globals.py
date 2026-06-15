@@ -34,6 +34,16 @@ class _Globals:
 
         self.RUNTIME = self.EPICS_ROOT / "runtime"
 
+        self.IBEK_DEFS_PATH = Path(
+            os.getenv("IBEK_DEFS_PATH", self.EPICS_ROOT / "ibek-defs")
+        )
+        """ The folder where ibek support YAML definitions are symlinked """
+
+        self.IOC_CONFIG_PATH = Path(
+            os.getenv("IOC_CONFIG_PATH", self.EPICS_ROOT / "ioc" / "config")
+        )
+        """ The folder containing the ioc.yaml instance definition """
+
         self.EPICS_HOST_ARCH = os.getenv("EPICS_HOST_ARCH", "linux-x86_64")
         """ Host architecture """
 
@@ -63,7 +73,7 @@ class _Globals:
         """ NFS mount point for the EPICS IOC """
 
         ########################################################################
-        ## IOC instance config from ioc-instance.env in
+        ## IOC instance config from globals.env in
         ## services/ioc_name/values.yaml
         ## these MUST be set for each RTEMS IOC instance
         ########################################################################
@@ -82,6 +92,17 @@ class _Globals:
             for in-container (ibek) built IOCs /epics/ioc is the default
         """
 
+        self.IOC_BUILD_NAME = self.IOC_ORIGINAL_LOCATION.name
+        """ the basename of the legacy build folder (IOC_ORIGINAL_LOCATION),
+            which can differ from IOC_NAME (the deployment/instance name), e.g.
+            build folder 'bl-va-ioc-01' deployed as instance 'bl19i-va-ioc-01'.
+            The generic-IOC project now builds with a fixed product name, so the
+            source binary/boot image are the generic 'ioc' / 'ioc.boot' under
+            bin/RTEMS-beatnik rather than being named after this. """
+
+        self.IOC_DOMAIN = os.getenv("IOC_DOMAIN")
+        """ The EPICS domain to use for this IOC, e.g. i19 """
+
         ########################################################################
         ## IOC instance config (defaults are normally sufficient)
         ########################################################################
@@ -89,7 +110,9 @@ class _Globals:
         self.IOC_NAME = os.getenv("IOC_NAME", "NO_IOC_NAME")
         """ the lowercase name of this IOC (derived from the instance folder name) """
 
-        self.RTEMS_EPICS_SCRIPT = os.getenv("RTEMS_EPICS_SCRIPT", "/ioc_nfs/st.cmd")
+        self.RTEMS_EPICS_SCRIPT = os.getenv(
+            "RTEMS_EPICS_SCRIPT", f"{self.RUNTIME}/st.cmd"
+        )
         """ override for the standard EPICS startup script filename """
 
         self.RTEMS_EPICS_BINARY = os.getenv(
@@ -100,3 +123,8 @@ class _Globals:
 
 
 GLOBALS = _Globals()
+
+
+def reload_globals():
+    """Re-initialize GLOBALS from current os.environ."""
+    GLOBALS.__init__()

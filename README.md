@@ -14,6 +14,11 @@ PyPI            | `pip install rtems-proxy`
 Docker          | `docker run ghcr.io/epics-containers/rtems-proxy:latest`
 Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 
+## Documentation
+
+More detailed documentation is available in the [Overview](docs/overview.md) file.
+
+
 ```
 rtems_proxy --help
 ```

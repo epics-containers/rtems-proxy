@@ -1,0 +1,3 @@
+[submodule "ibek-runtime-support-dls"]
+	path = ibek-runtime-support-dls
+	url = https://gitlab.diamond.ac.uk/controls/containers/utils/ibek-runtime-support-dls.git

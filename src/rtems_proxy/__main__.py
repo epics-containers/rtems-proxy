@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 from time import sleep
@@ -13,7 +14,8 @@ from . import __version__
 from .configure import Configure
 from .connect import ioc_connect, motboot_connect, report
 from .copy import check_new_version, copy_rtems, save_current_version
-from .globals import GLOBALS
+from .globals import GLOBALS, reload_globals
+from .hybrid import hybrid_prepare
 
 __all__ = ["main"]
 
@@ -41,6 +43,68 @@ def main(
     """
 
 
+def _load_instance_env(instance_path: Path) -> tuple[dict[str, str], str]:
+    """
+    Extract environment variables from a services repo IOC instance folder.
+    Sets them in os.environ and returns (env_vars, domain).
+
+    Expects:
+      instance_path/values.yaml        (instance-level env vars)
+      instance_path/../values.yaml     (global env vars and domain)
+    """
+    global_values = instance_path.parent / "values.yaml"
+    instance_values = instance_path / "values.yaml"
+
+    if not global_values.exists():
+        typer.echo(f"Global settings file {global_values} not found")
+        raise typer.Exit(1)
+    if not instance_values.exists():
+        typer.echo(f"Instance settings file {instance_values} not found")
+        raise typer.Exit(1)
+
+    env_vars: dict[str, str] = {}
+
+    with open(global_values) as fp:
+        yaml = YAML(typ="safe").load(fp)
+    try:
+        domain = yaml["global"]["domain"]
+    except KeyError:
+        typer.echo(f"{global_values} global.domain key missing")
+        raise typer.Exit(1) from None
+    try:
+        for item in yaml["global"]["env"]:
+            env_vars[item["name"]] = str(item["value"])
+    except KeyError:
+        typer.echo(f"{global_values} global.env key missing")
+        raise typer.Exit(1) from None
+
+    with open(instance_values) as fp:
+        yaml = YAML(typ="safe").load(fp)
+    try:
+        for item in yaml["ioc-instance"]["env"]:
+            env_vars[item["name"]] = str(item["value"])
+    except KeyError:
+        typer.echo(f"{instance_values} ioc-instance.env key missing")
+        raise typer.Exit(1) from None
+
+    env_vars["IOC_DOMAIN"] = domain
+
+    # IOC_NAME is the deployment/instance name, i.e. the services instance
+    # folder name (and the helm release / k8s service name). It must NOT be
+    # derived from IOC_ORIGINAL_LOCATION: that points at the legacy build
+    # folder, whose basename can differ from the instance name (e.g.
+    # bl-va-ioc-01 vs bl19i-va-ioc-01). Using the build folder name produced
+    # the wrong TFTP boot path (/iocs/bl-va-ioc-01/rtems.ioc.bin), NFS mount
+    # and rtems-client-name. The instance folder name is the authoritative
+    # source, matching the $(IOC_NAME) subPathExpr volume mounts.
+    env_vars["IOC_NAME"] = instance_path.name
+
+    for name, value in env_vars.items():
+        os.environ[name] = value
+
+    return env_vars, domain
+
+
 @cli.command()
 def start(
     copy: bool = typer.Option(
@@ -57,6 +121,19 @@ def start(
     ),
     raise_errors: bool = typer.Option(
         True, "--raise-errors/--no-raise-errors", help="raise errors instead of exiting"
+    ),
+    hybrid: bool = typer.Option(
+        False,
+        "--hybrid/--no-hybrid",
+        help="hybrid mode: generate runtime from ibek+msi before copying",
+    ),
+    instance: Path | None = typer.Option(
+        None,
+        help="path to IOC instance folder in a services repo "
+        "(e.g. .../services/bl19i-va-ioc-01); "
+        "extracts env vars from values.yaml so you don't have to export them",
+        exists=True,
+        file_okay=False,
     ),
 ):
     """
@@ -75,11 +152,17 @@ def start(
     reboot:  Reboot the IOC once the binaries are copied and the connection is
              made. Ignored if connect is False.
     """
+    if instance:
+        _load_instance_env(instance)
+        reload_globals()
+
     report(
         f"Remote control startup of RTEMS IOC {GLOBALS.IOC_NAME}"
         f" at {GLOBALS.RTEMS_IOC_IP}"
     )
-    if copy:
+    if hybrid:
+        hybrid_prepare(instance_path=instance)
+    elif copy:
         copy_rtems()
 
     # always reboot if the IOC definition has changed
@@ -125,49 +208,14 @@ def dev(
     """
 
     ioc_path = ioc_repo / "services" / ioc_name
-
-    values = ioc_repo / "services" / "values.yaml"
-    if not values.exists():
-        typer.echo(f"Global settings file {values} not found. Exiting")
-        raise typer.Exit(1)
-
-    ioc_values = ioc_path / "values.yaml"
-    if not ioc_values.exists():
-        typer.echo(f"Instance settings file {ioc_values} not found. Exiting")
-        raise typer.Exit(1)
-
-    env_vars = {}
-    # TODO in future use pydantic and make a model for this but for now let's cheese it.
-    with open(values) as fp:
-        yaml = YAML(typ="safe").load(fp)
-    try:
-        ioc_group = yaml["global"]["ioc_group"]
-    except KeyError:
-        typer.echo(f"{values} global.ioc_group key missing")
-        raise typer.Exit(1) from None
-    try:
-        ioc_group = yaml["global"]["ioc_group"]
-        for item in yaml["ioc-instance"]["globalEnv"]:
-            env_vars[item["name"]] = item["value"]
-    except KeyError:
-        typer.echo(f"{values} globalEnv key missing")
-        raise typer.Exit(1) from None
-
-    with open(ioc_values) as fp:
-        yaml = YAML(typ="safe").load(fp)
-    try:
-        for item in yaml["ioc-instance"]["iocEnv"]:
-            env_vars[item["name"]] = item["value"]
-    except KeyError:
-        typer.echo(f"{ioc_values} iocEnv key missing")
-        raise typer.Exit(1) from None
+    env_vars, domain = _load_instance_env(ioc_path)
 
     this_dir = Path(__file__).parent
     template = Path(this_dir / "rsync.sh.jinja").read_text()
 
     script = Template(template).render(
         env_vars=env_vars,
-        ioc_group=ioc_group,
+        domain=domain,
         ioc_name=ioc_name,
         ioc_path=ioc_path,
     )
