@@ -34,7 +34,7 @@ name = "blessed"
 version = "1.38.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jinxed", marker = "sys_platform == 'win32'" },
+    { name = "jinxed" },
     { name = "wcwidth" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9f/1f/f2535d0eb1fb8af7915f96b4d42810345c255bbbca39939a23e59c0695d8/blessed-1.38.0.tar.gz", hash = "sha256:89ce6ec6567f7aced0716b73577b7a1702eb23c667838bb46d7d9bd48c36d1b3", size = 14008103, upload-time = "2026-03-30T22:47:36.787Z" }
@@ -44,14 +44,14 @@ wheels = [
 
 [[package]]
 name = "builder2ibek"
-version = "2.1.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ibek" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f6/89/2df11fb0d2f70be2e1e8039832afc41ef564cf5d00325cf445ea0f822173/builder2ibek-2.1.0.tar.gz", hash = "sha256:7dc775948fbe0283ae599aa378575a1b356caab1b499c945e9b8e502e3282c3f", size = 891427, upload-time = "2026-06-15T16:18:34.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/a5/97c3ae22cd6910adfc063f9593ae012ce0b83deb9a3378e2bbce830a6cff/builder2ibek-2.2.0.tar.gz", hash = "sha256:d17d563b9635d1c55ccd162cc4410fdf2f1fba802730fae40a805bafcdbcfbde", size = 878677, upload-time = "2026-07-03T07:47:10.196Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/c6/5ddfea12aeeb5071a59a2837094ba7d15c3b90d3ec0d380040167df929a9/builder2ibek-2.1.0-py3-none-any.whl", hash = "sha256:7979cc08f1ae1de2689c587383dccc57e0028bca73317f4ada77b6e877874a54", size = 105613, upload-time = "2026-06-15T16:18:33.626Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/b3/e0da5b8241ba0eb5d78d7890bfb5384c4cd55388d0af10c5e02026e2ad29/builder2ibek-2.2.0-py3-none-any.whl", hash = "sha256:a58c25e96d756ea4a0ebbe3c3b7dc2082b7da1b4b77b6bced3f2fd1cf2da41d1", size = 108884, upload-time = "2026-07-03T07:47:08.979Z" },
 ]
 
 [[package]]
@@ -315,7 +315,7 @@ name = "jinxed"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ansicon", marker = "sys_platform == 'win32'" },
+    { name = "ansicon" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3c/e9/96633f12b6829eb1e91e70e5846704c0b1293ec47bd65a7b681e19c8eeff/jinxed-1.4.0.tar.gz", hash = "sha256:8f7801a10799de39e509eb5abc6d131ee169c1ce4fd5d568aa85b5f56ed58068", size = 37169, upload-time = "2026-03-26T01:49:38.337Z" }
 wheels = [
@@ -851,7 +851,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-ci = [{ name = "builder2ibek", specifier = "==2.1.0" }]
+ci = [{ name = "builder2ibek", specifier = "==2.2.0" }]
 dev = [
     { name = "copier" },
     { name = "pre-commit" },

@@ -43,7 +43,7 @@ dev = [
 # new builder2ibek arrives as a reviewable Renovate PR that runs these tests.
 # Run the hybrid tests with:  uv run --group ci pytest tests/test_hybrid.py
 ci = [
-    "builder2ibek==2.1.0",
+    "builder2ibek==2.2.0",
 ]
 
 [project.scripts]
