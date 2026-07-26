@@ -32,7 +32,7 @@ jobs:
       - name: Setup Python
         # the runner's default python may be older than requires-python in
         # pyproject.toml; pin to a supported version for the install/run checks
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
