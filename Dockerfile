@@ -38,7 +38,7 @@ RUN mkdir -p /epics/ibek-defs /epics/runtime /epics/autosave \
     && chmod a+rwx /epics/ibek-defs /epics/runtime /epics/autosave
 
 # The runtime stage copies the built venv into a runtime container
-FROM ghcr.io/epics-containers/epics-base-runtime:7.0.10ec1 AS runtime
+FROM ghcr.io/epics-containers/epics-base-runtime:7.0.10ec5 AS runtime
 
 # Add apt-get system dependencies for runtime here if needed
 # RUN apt-get update -y && apt-get install -y --no-install-recommends \
