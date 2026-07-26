@@ -1,6 +1,6 @@
 # This container is bases on epics-base so that we have access to the msi tool
 # and CA client tools for diagnostics.
-FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec1 AS developer
+FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec5 AS developer
 
 # Add any system dependencies for the developer/build environment here
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
