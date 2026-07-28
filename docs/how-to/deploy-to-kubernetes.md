@@ -22,8 +22,12 @@ rtems-proxy machinery is involved at deploy time.
    Bootstrap it once from the branch:
 
    ```bash
+   module load ec/<beamline>
    ec deploy <ioc-name> <branch-name>
    ```
+
+   `ec` is not on the path by default — `module load ec/<beamline>` provides it
+   and points `kubectl` at that beamline's cluster context and namespace.
 
    On subsequent updates this manual step is not needed — argocd picks up
    changes to an existing instance automatically.

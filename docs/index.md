@@ -6,6 +6,16 @@ html_theme.sidebar_secondary.remove: true
 :end-before: <!-- README only content
 ```
 
+:::{important}
+These docs assume a Diamond Light Source environment throughout: `/dls_sw` for
+the Generic IOC build trees and support module templates, the module system for
+`ec` and `uv`, podman on managed workstations, and the Argus cluster for
+deployment. Commands are written to be run as-is at DLS rather than qualified
+for a general audience. For the facility-neutral epics-containers documentation
+see <https://epics-containers.github.io/>, and for wider DLS practice see the
+[DLS developer guide](https://dev-guide.diamond.ac.uk/epics-containers/).
+:::
+
 
 How the documentation is structured
 -----------------------------------

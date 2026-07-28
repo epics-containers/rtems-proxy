@@ -129,6 +129,11 @@ rtems-proxy start --hybrid \
 ## Step 6 — Deploy to the cluster
 
 Commit `values.yaml` and `config/ioc.yaml`, push the branch, and — for a
-brand-new instance only — bootstrap argocd once with
-`ec deploy bl19i-va-ioc-01 <branch-name>`. See
-[](../how-to/deploy-to-kubernetes.md).
+brand-new instance only — bootstrap argocd once:
+
+```bash
+module load ec/i19
+ec deploy bl19i-va-ioc-01 <branch-name>
+```
+
+See [](../how-to/deploy-to-kubernetes.md).

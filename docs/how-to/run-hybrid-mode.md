@@ -33,9 +33,9 @@ needed in a cluster, where the proxy pod writes to both directly.
 ### Push the boot binary to TFTP (one-off, from the workstation)
 
 The devcontainer cannot mount a cluster PVC, so this step is done **outside**
-it, from a workstation with `kubectl` and cluster credentials. The namespace
-runs a long-lived pod that mounts the TFTP PVC without a `subPath` for exactly
-this purpose:
+it, from a workstation. The namespace runs a long-lived pod that mounts the
+TFTP PVC without a `subPath` for exactly this purpose. `module load` provides
+`ec` and points `kubectl` at the beamline's cluster context and namespace:
 
 ```bash
 # 1. find the uploader pod
