@@ -22,20 +22,11 @@ Full documentation is at <https://epics-containers.github.io/rtems-proxy>, inclu
 [worked example](https://epics-containers.github.io/rtems-proxy/main/tutorials/hybrid-ioc-walkthrough.html)
 of converting a VxWorks IOC to a hybrid RTEMS IOC.
 
-These docs are written for Diamond Light Source. RTEMS IOCs under
-epics-containers are a DLS-specific concern, so the guides assume DLS
-infrastructure throughout — `/dls_sw`, the module system, podman on managed
-workstations, and the Argus cluster — rather than describing a facility-neutral
-setup and then qualifying it.
-
-
-```
-rtems_proxy --help
-```
 ## Development
 
 This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
-On a DLS workstation, get it with `module load uv`.
+On a DLS workstation, get it with `module load uv`. We recommend working
+in vscode with the provided devcontainer.
 
 ### Running Tests and Type Checking
 
