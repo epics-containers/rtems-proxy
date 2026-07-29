@@ -56,9 +56,11 @@ re-run:
 exports needed. `--no-connect` stops after the assets are staged, which is what
 you want when testing generation rather than booting a crate.
 
-This is the whole point of the write grants: without them the run dies at step
-7 with a permission error on `/ioc_nfs`, and Claude cannot see the pipeline
-through to the artefacts it needs to check.
+This is the whole point of the write grants — each one gates a different part of
+the run, so a missing grant fails at a different place: without `/epics` the run
+cannot get past steps 1–6, without `/ioc_nfs` it fails at step 7, and without
+`/ioc_tftp` at step 8. In every case Claude stops short of the artefacts it
+needs to inspect.
 
 :::{note}
 `msi` is invoked by bare name, so steps 5 and 6 fail with `msi expansion
@@ -66,7 +68,9 @@ failed` unless `/epics/epics-base/bin/linux-x86_64` is on `PATH`. The sandbox
 sets `PATH` itself and ignores `pass-env` for it, so prefix the command:
 
 ```bash
-PATH=/epics/epics-base/bin/linux-x86_64:$PATH rtems-proxy start --hybrid ...
+PATH=/epics/epics-base/bin/linux-x86_64:$PATH \
+  rtems-proxy start --hybrid --no-connect \
+  --instance /workspaces/i15-services/services/bl15i-va-ioc-01
 ```
 :::
 
