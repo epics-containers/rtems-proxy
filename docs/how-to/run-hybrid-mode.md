@@ -65,15 +65,20 @@ Unlike the TFTP binary push, this **repeats every time the generated runtime
 changes** — edit `ioc.yaml`, touch a support template, or otherwise alter
 `st.cmd`/`ioc.db`, and you must regenerate and copy again.
 
-Empty the target first. A previous run — or the old flat layout — can leave
-stale files behind (most dangerously an old `st.cmd` still pointing at the
+Clear stale files as you copy. A previous run — or the old flat layout — can
+leave files behind (most dangerously an old `st.cmd` still pointing at the
 retired `/epics_rtems_root` mount), and the crate will happily boot whatever is
 there:
 
 ```bash
-rm -rf /dls_sw/i19/epics/rtems/bl19i-va-ioc-01/*
-cp -a /ioc_nfs/. /dls_sw/i19/epics/rtems/bl19i-va-ioc-01/
+rsync -a --delete /ioc_nfs/ /dls_sw/i19/epics/rtems/bl19i-va-ioc-01/
 ```
+
+`--delete` removes anything at the destination that is not in `/ioc_nfs`, which
+is what clears the stale files. Prefer this over `rm -rf` followed by a copy: it
+is a single pass, so the export is never momentarily empty if the crate happens
+to reboot mid-update. Note the trailing slash on the source — without it rsync
+would nest a `ioc_nfs/` directory inside the target.
 
 ```{note}
 **Split access — a known rough edge.** No single shell has both ends: inside

@@ -94,7 +94,7 @@ ioc-instance:
 | Variable | Source | Meaning |
 | --- | --- | --- |
 | `IOC_ORIGINAL_LOCATION` | instance env | Generic IOC build tree — `ibek-support*`, `data/msi.vars`, `bin/RTEMS-beatnik/ioc.boot` |
-| `IOC_NAME` | derived | Instance name; with `--instance` it is the services folder name, uppercased |
+| `IOC_NAME` | derived | Instance name; with `--instance` it is the services folder name, unchanged |
 | `RTEMS_IOC_IP` | instance env | Static IP of the crate |
 | `RTEMS_CONSOLE` | instance env | `host:port` of the terminal server for the crate's serial console |
 | `RTEMS_IOC_GATEWAY` | global env | Gateway written into motBoot NVM |
@@ -115,7 +115,8 @@ The defaults are defined in `src/rtems_proxy/globals.py`.
 - reads instance env vars from `<instance>/values.yaml`;
 - derives `IOC_NAME` from the instance folder name;
 - sets `IOC_DOMAIN` from `global.domain`;
-- symlinks `<instance>/config/` into `/epics/ioc/config`.
+- symlinks `<instance>/config/` into `/epics/ioc/config` — only when combined
+  with `--hybrid`, as this is done by `hybrid_prepare()`.
 
 In a cluster all of this comes from the Helm-rendered environment and
 Kubernetes volume mounts instead, so the container command is simply:

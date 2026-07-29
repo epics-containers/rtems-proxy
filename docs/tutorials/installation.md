@@ -13,8 +13,8 @@ you want the CLI on a workstation.
 You will need python 3.13 or later. You can check your version of python by
 typing into a terminal:
 
-```
-$ python3 --version
+```bash
+python3 --version
 ```
 
 ## Create a virtual environment
@@ -22,29 +22,29 @@ $ python3 --version
 It is recommended that you install into a “virtual environment” so this
 installation will not interfere with any existing Python software:
 
-```
-$ python3 -m venv /path/to/venv
-$ source /path/to/venv/bin/activate
+```bash
+python3 -m venv /path/to/venv
+source /path/to/venv/bin/activate
 ```
 
 ## Installing the library
 
 You can now use `pip` to install the library and its dependencies:
 
-```
-$ python3 -m pip install rtems-proxy
+```bash
+python3 -m pip install rtems-proxy
 ```
 
 If you require a feature that is not currently released you can also install
 from github:
 
-```
-$ python3 -m pip install git+https://github.com/epics-containers/rtems-proxy.git
+```bash
+python3 -m pip install git+https://github.com/epics-containers/rtems-proxy.git
 ```
 
 The library should now be installed and the commandline interface on your path.
 You can check the version that has been installed by typing:
 
-```
-$ rtems-proxy --version
+```bash
+rtems-proxy --version
 ```
