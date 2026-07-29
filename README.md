@@ -8,23 +8,25 @@
 Support for a K8S proxy container in controlling and monitoring RTEMS EPICS IOCs
 
 
-Source          | <https://github.com/epics-containers/rtems-proxy>
+What            | Where
 :---:           | :---:
+Source          | <https://github.com/epics-containers/rtems-proxy>
 PyPI            | `pip install rtems-proxy`
-Docker          | `docker run ghcr.io/epics-containers/rtems-proxy:latest`
+Podman          | `podman run ghcr.io/epics-containers/rtems-proxy:latest`
+Documentation   | <https://epics-containers.github.io/rtems-proxy>
 Releases        | <https://github.com/epics-containers/rtems-proxy/releases>
 
 ## Documentation
 
-More detailed documentation is available in the [Overview](docs/overview.md) file.
+Full documentation is at <https://epics-containers.github.io/rtems-proxy>, including a
+[worked example](https://epics-containers.github.io/rtems-proxy/main/tutorials/hybrid-ioc-walkthrough.html)
+of converting a VxWorks IOC to a hybrid RTEMS IOC.
 
-
-```
-rtems_proxy --help
-```
 ## Development
 
 This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
+On a DLS workstation, get it with `module load uv`. We recommend working
+in vscode with the provided devcontainer.
 
 ### Running Tests and Type Checking
 
@@ -54,3 +56,7 @@ Install all dependencies including dev dependencies:
 ```bash
 uv sync --group dev
 ```
+
+<!-- README only content. Anything below this line won't be included in index.md -->
+
+See https://epics-containers.github.io/rtems-proxy for more detailed documentation.
