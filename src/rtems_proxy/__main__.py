@@ -16,6 +16,7 @@ from .connect import ioc_connect, motboot_connect, report
 from .copy import check_new_version, copy_rtems, save_current_version
 from .globals import GLOBALS, reload_globals
 from .hybrid import hybrid_prepare
+from .macros import check_release_convention, check_support_yamls
 
 __all__ = ["main"]
 
@@ -298,6 +299,94 @@ def trace(
     """
     trace = trace_file.read_text()
     parse_stack_trace(trace)
+
+
+@cli.command()
+def check(
+    instance: Path | None = typer.Option(
+        None,
+        help="path to IOC instance folder in a services repo "
+        "(e.g. .../services/bl19i-va-ioc-01); "
+        "extracts env vars from values.yaml so you don't have to export them",
+        exists=True,
+        file_okay=False,
+    ),
+    convention: bool = typer.Option(
+        True,
+        "--convention/--no-convention",
+        help="also audit configure/RELEASE macro naming",
+    ),
+):
+    """
+    Check the generic IOC for support-module macro problems, without running
+    the hybrid pipeline.
+
+    Reports support YAMLs whose $(MACRO) is defined under a different name in
+    the build (which fails at msi time if the entity is ever instantiated), and
+    optionally audits configure/RELEASE against the convention that a macro is
+    its module directory name uppercased.
+    """
+    if not instance and not os.getenv("IOC_ORIGINAL_LOCATION"):
+        typer.echo(
+            "Nothing to check: no --instance given and IOC_ORIGINAL_LOCATION is"
+            " not set.\n\n"
+            "This command needs the generic IOC build tree. Supply it either by\n"
+            "  --instance <services instance folder>   (reads it from values.yaml), or\n"
+            "  export IOC_ORIGINAL_LOCATION=<build tree>"
+            "  (as the Helm environment does in a cluster).\n\n"
+            f"Without either, it defaults to {GLOBALS.EPICS_ROOT / 'ioc'}, which is"
+            " the in-container\nibek build layout and has no data/msi.vars to"
+            " check against."
+        )
+        raise typer.Exit(2)
+
+    if instance:
+        _load_instance_env(instance)
+        reload_globals()
+
+    ioc_root = GLOBALS.IOC_ORIGINAL_LOCATION
+    msi_vars = ioc_root / "data" / "msi.vars"
+    if not msi_vars.exists():
+        typer.echo(
+            f"msi.vars not found at {msi_vars}\n"
+            f"IOC_ORIGINAL_LOCATION is {ioc_root} — is that the right build tree,"
+            " and has the IOC been built?"
+        )
+        raise typer.Exit(1)
+
+    failed = False
+
+    mismatches = check_support_yamls(ioc_root, msi_vars)
+    if mismatches:
+        failed = True
+        typer.echo(f"{len(mismatches)} macro mismatch(es):\n")
+        for mismatch in mismatches:
+            typer.echo(mismatch.describe(msi_vars) + "\n")
+    else:
+        typer.echo("No macro mismatches found.")
+
+    if convention:
+        release = ioc_root / "configure" / "RELEASE"
+        if not release.exists():
+            typer.echo(f"\nNo configure/RELEASE at {release}, skipping audit.")
+        else:
+            violations = check_release_convention(release)
+            if violations:
+                typer.echo(
+                    f"\n{len(violations)} RELEASE macro(s) do not follow the"
+                    " module-name-uppercased convention:\n"
+                )
+                for macro, module, expected in violations:
+                    typer.echo(f"  {macro:<18} -> {module:<22} expected {expected}")
+                typer.echo(
+                    "\nThese only break once a support YAML references the"
+                    " expected name, but are a latent trap until renamed."
+                )
+            else:
+                typer.echo("\nAll RELEASE macros follow the naming convention.")
+
+    if failed:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from pathlib import Path
 import typer
 
 from .globals import GLOBALS
+from .macros import check_subst_macros, check_support_yamls
 from .telnet import report
 
 
@@ -30,7 +31,9 @@ def hybrid_prepare(instance_path: Path | None = None):
         _link_instance_config(instance_path)
 
     _link_ibek_support_yamls()
+    _warn_support_yaml_macros()
     _run_ibek_generate()
+    _check_subst_macros()
     _run_msi()
     _run_ibek_autosave()
     _copy_to_nfs()
@@ -113,6 +116,59 @@ def _run_ibek_generate():
             raise typer.Exit(1)
 
     report("ibek generate2 completed")
+
+
+def _msi_vars_path() -> Path:
+    return GLOBALS.IOC_ORIGINAL_LOCATION / "data" / "msi.vars"
+
+
+def _warn_support_yaml_macros():
+    """
+    Advisory: report support YAMLs whose macro is defined under another name.
+
+    These are latent -- the module's entity types are not instantiated by this
+    IOC, so nothing fails today -- but the first instance to use one gets an
+    opaque msi failure. Never fatal: a warning must not block a working IOC.
+    """
+    msi_vars = _msi_vars_path()
+    if not msi_vars.exists():
+        return
+
+    mismatches = check_support_yamls(GLOBALS.IOC_ORIGINAL_LOCATION, msi_vars)
+    if not mismatches:
+        return
+
+    report(f"WARNING: {len(mismatches)} support YAML macro mismatch(es) -- latent")
+    for mismatch in mismatches:
+        typer.echo(f"  {mismatch.module}: $({mismatch.macro}) vs {mismatch.alias}")
+    typer.echo("  not used by this IOC; run 'rtems-proxy check' for detail")
+
+
+def _check_subst_macros():
+    """
+    Fail before msi if the generated subst uses a macro msi.vars does not define.
+
+    Without this the run dies inside msi with a bare 'msi expansion failed' and
+    the real cause (macLib: macro X is undefined) is buried in its stderr.
+    """
+    msi_vars = _msi_vars_path()
+    if not msi_vars.exists():
+        typer.echo(f"msi.vars not found at {msi_vars}")
+        raise typer.Exit(1)
+
+    mismatches = check_subst_macros(
+        GLOBALS.RUNTIME / "ioc.subst", GLOBALS.IOC_ORIGINAL_LOCATION, msi_vars
+    )
+    if mismatches:
+        typer.echo(
+            f"\n{len(mismatches)} macro(s) used by the generated ioc.subst are not"
+            " defined -- msi would fail to expand them:\n"
+        )
+        for mismatch in mismatches:
+            typer.echo(mismatch.describe(msi_vars) + "\n")
+        raise typer.Exit(1)
+
+    report("Macro check passed")
 
 
 def _run_msi():
