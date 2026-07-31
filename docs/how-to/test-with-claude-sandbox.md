@@ -34,13 +34,13 @@ allow-ip = 172.23.142.119
 ```
 
 Why each write path is needed, by [pipeline](../reference/hybrid-pipeline.md)
-step: `/epics` for steps 1–6 (`runtime/`, `ioc/config`, `ibek-defs/`,
-`autosave/`), `/ioc_nfs` for step 7 and `/ioc_tftp` for step 8. Swap the
+step: `/epics` for steps 1–8 (`runtime/`, `ioc/config`, `ibek-defs/`,
+`autosave/`), `/ioc_nfs` for step 9 and `/ioc_tftp` for step 10. Swap the
 services repo for the beamline you are working on.
 
-Nothing is needed for reads: `IOC_ORIGINAL_LOCATION`
-(`/dls_sw/work/...`, the sources for steps 3, 5, 6 and 8) and `/dls_sw/prod`
-are already readable in the sandbox.
+Nothing is needed for reads: `IOC_ORIGINAL_LOCATION` (`/dls_sw/work/...`, the
+generic IOC build tree read throughout) and `/dls_sw/prod` are already readable
+in the sandbox.
 
 ## Worked example: the i15 vacuum IOC
 
@@ -58,12 +58,12 @@ you want when testing generation rather than booting a crate.
 
 This is the whole point of the write grants — each one gates a different part of
 the run, so a missing grant fails at a different place: without `/epics` the run
-cannot get past steps 1–6, without `/ioc_nfs` it fails at step 7, and without
-`/ioc_tftp` at step 8. In every case Claude stops short of the artefacts it
+cannot get past steps 1–8, without `/ioc_nfs` it fails at step 9, and without
+`/ioc_tftp` at step 10. In every case Claude stops short of the artefacts it
 needs to inspect.
 
 :::{note}
-`msi` is invoked by bare name, so steps 5 and 6 fail with `msi expansion
+`msi` is invoked by bare name, so steps 7 and 8 fail with `msi expansion
 failed` unless `/epics/epics-base/bin/linux-x86_64` is on `PATH`. The sandbox
 sets `PATH` itself and ignores `pass-env` for it, so prefix the command:
 
