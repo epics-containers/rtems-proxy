@@ -96,7 +96,8 @@ ioc-instance:
 | `IOC_ORIGINAL_LOCATION` | instance env | Generic IOC build tree — `ibek-support*`, `data/msi.vars`, `bin/RTEMS-beatnik/ioc.boot` |
 | `IOC_NAME` | derived | Instance name; with `--instance` it is the services folder name, unchanged |
 | `RTEMS_IOC_IP` | instance env | Static IP of the crate |
-| `RTEMS_CONSOLE` | instance env | `host:port` of the terminal server for the crate's serial console |
+| `RTEMS_CONSOLE` | instance env | `host:port` of the terminal server for the crate's serial console, or the conserver console name when `RTEMS_USE_CONSOLE` is set |
+| `RTEMS_USE_CONSOLE` | instance env (optional) | `true` to reach the console via conserver (`console $RTEMS_CONSOLE`) instead of telnet; overridden by `--use-console/--no-use-console` |
 | `RTEMS_IOC_GATEWAY` | global env | Gateway written into motBoot NVM |
 | `RTEMS_IOC_NETMASK` | global env | Netmask written into motBoot NVM |
 | `RTEMS_NFS_IP` | global env | NFS server the crate mounts at boot |

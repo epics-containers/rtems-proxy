@@ -136,6 +136,12 @@ def start(
         exists=True,
         file_okay=False,
     ),
+    use_console: bool | None = typer.Option(
+        None,
+        "--use-console/--no-use-console",
+        help="connect via conserver instead of telnet "
+        "(defaults to the RTEMS_USE_CONSOLE env var)",
+    ),
 ):
     """
     Starts an RTEMS IOC. Places the IOC binaries in the expected location,
@@ -152,6 +158,9 @@ def start(
     connect: Connect to the IOC console after rebooting
     reboot:  Reboot the IOC once the binaries are copied and the connection is
              made. Ignored if connect is False.
+    use_console: Connect via conserver ('console RTEMS_CONSOLE') instead of
+             telnet. RTEMS_CONSOLE must then hold the console name, not
+             host:port.
     """
     if instance:
         _load_instance_env(instance)
@@ -179,6 +188,9 @@ def start(
             attach=True,
             raise_errors=raise_errors,
             configure=configure,
+            use_console=(
+                GLOBALS.RTEMS_USE_CONSOLE if use_console is None else use_console
+            ),
         )
         # now we have rebooted into the IOC we can save the current version
         save_current_version()
@@ -239,8 +251,11 @@ def configure(
     dry_run: bool = typer.Option(
         False, help="print the configuration commands without applying them"
     ),
-    use_console: bool = typer.Option(
-        False, help="use conserver console instead of telnet"
+    use_console: bool | None = typer.Option(
+        None,
+        "--use-console/--no-use-console",
+        help="use conserver console instead of telnet "
+        "(defaults to the RTEMS_USE_CONSOLE env var)",
     ),
 ):
     """
@@ -253,6 +268,8 @@ def configure(
     else:
         assert GLOBALS.RTEMS_CONSOLE, "No RTEMS console defined"
 
+        if use_console is None:
+            use_console = GLOBALS.RTEMS_USE_CONSOLE
         telnet = motboot_connect(GLOBALS.RTEMS_CONSOLE, use_console=use_console)
         config = Configure(telnet, debug=debug, dry_run=False)
         config.apply_settings()

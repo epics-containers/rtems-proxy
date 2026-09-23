@@ -82,7 +82,16 @@ class _Globals:
         """ address of the real RTEMS IOC  hardware """
 
         self.RTEMS_CONSOLE = os.getenv("RTEMS_CONSOLE")
-        """ address:port to connect to the IOC console """
+        """ address:port to connect to the IOC console, or just the conserver
+            console name (e.g. BL19I-VA-IOC-01) when RTEMS_USE_CONSOLE is set """
+
+        self.RTEMS_USE_CONSOLE = os.getenv("RTEMS_USE_CONSOLE", "").lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        """ connect via conserver ('console RTEMS_CONSOLE') instead of telnet """
 
         self.IOC_ORIGINAL_LOCATION = Path(
             os.getenv("IOC_ORIGINAL_LOCATION", self.EPICS_ROOT / "ioc")
