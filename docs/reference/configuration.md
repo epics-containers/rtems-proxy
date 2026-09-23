@@ -98,6 +98,7 @@ ioc-instance:
 | `RTEMS_IOC_IP` | instance env | Static IP of the crate |
 | `RTEMS_CONSOLE` | instance env | `host:port` of the terminal server for the crate's serial console, or the conserver console name when `RTEMS_USE_CONSOLE` is set |
 | `RTEMS_USE_CONSOLE` | instance env (optional) | `true` to reach the console via conserver (`console $RTEMS_CONSOLE`) instead of telnet; overridden by `--use-console/--no-use-console` |
+| `RTEMS_CONSOLE_COMMAND` | instance or global env (optional) | conserver client command for console mode, default `/usr/bin/console`; the console name is appended. Add options such as `-M <master>` here |
 | `RTEMS_IOC_GATEWAY` | global env | Gateway written into motBoot NVM |
 | `RTEMS_IOC_NETMASK` | global env | Netmask written into motBoot NVM |
 | `RTEMS_NFS_IP` | global env | NFS server the crate mounts at boot |
@@ -107,6 +108,29 @@ ioc-instance:
 | `IOC_CONFIG_PATH` | optional | Folder holding `ioc.yaml`, default `$EPICS_ROOT/ioc/config` |
 
 The defaults are defined in `src/rtems_proxy/globals.py`.
+
+### Console (conserver) mode
+
+With `RTEMS_USE_CONSOLE` set, rtems-proxy runs
+`$RTEMS_CONSOLE_COMMAND $RTEMS_CONSOLE` instead of telnet. The
+`rtems-proxy-developer` image includes the conserver client
+(`conserver-client`, `/usr/bin/console`). The pod must also be able to reach
+the conserver master. A pod has no `/etc/console.cf`, so unless the client's
+compiled-in default master is right for your site, name the master
+explicitly, e.g.:
+
+```yaml
+    - name: RTEMS_USE_CONSOLE
+      value: "true"
+    - name: RTEMS_CONSOLE
+      value: BL19I-VA-IOC-01
+    - name: RTEMS_CONSOLE_COMMAND
+      value: /usr/bin/console -M <conserver-master-host>
+```
+
+The default is an absolute path on purpose: the `stdio-socket` dependency
+installs its own, unrelated `console` script into the venv, which comes
+first on `PATH`.
 
 ## What the instance flag does
 

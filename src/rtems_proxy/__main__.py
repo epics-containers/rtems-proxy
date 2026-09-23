@@ -279,7 +279,14 @@ def configure(
 
 
 @cli.command()
-def stress():
+def stress(
+    use_console: bool | None = typer.Option(
+        None,
+        "--use-console/--no-use-console",
+        help="connect via conserver instead of telnet "
+        "(defaults to the RTEMS_USE_CONSOLE env var)",
+    ),
+):
     """
     Stress test the IOC by constantly rebooting and checking for failed boot
 
@@ -288,13 +295,20 @@ def stress():
     if not GLOBALS.RTEMS_CONSOLE:
         raise ValueError("RTEMS_CONSOLE must be set")
 
+    if use_console is None:
+        use_console = GLOBALS.RTEMS_USE_CONSOLE
+
     tries = 0
     try:
         while True:
             tries += 1
             print(f">>>>>> REBOOT ATTEMPT {tries} <<<<<<<")
             ioc_connect(
-                GLOBALS.RTEMS_CONSOLE, reboot=True, attach=False, raise_errors=True
+                GLOBALS.RTEMS_CONSOLE,
+                reboot=True,
+                attach=False,
+                raise_errors=True,
+                use_console=use_console,
             )
             sleep(5)
     except Exception as e:

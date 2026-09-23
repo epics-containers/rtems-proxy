@@ -3,7 +3,9 @@
 FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec1 AS developer
 
 # Add any system dependencies for the developer/build environment here
+# conserver-client provides /usr/bin/console for RTEMS_USE_CONSOLE mode
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    conserver-client \
     rsync \
     telnet \
     && apt-get dist-clean
