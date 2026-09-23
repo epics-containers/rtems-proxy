@@ -5,6 +5,8 @@ from time import sleep
 
 import pexpect
 
+from .globals import GLOBALS
+
 
 class CannotConnectError(Exception):
     pass
@@ -47,7 +49,7 @@ class TelnetRTEMS:
         if use_console:
             # console needs no port
             self._hostname = host_and_port
-            self.command = f"console {self._hostname}"
+            self.command = f"{GLOBALS.RTEMS_CONSOLE_COMMAND} {self._hostname}"
         else:
             self._hostname, self._port = host_and_port.split(":")
             self.command = f"telnet {self._hostname} {self._port}"
