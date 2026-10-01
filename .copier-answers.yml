@@ -15,3 +15,5 @@ pypi: true
 repo_name: rtems-proxy
 strict_typing: false
 type_checker: pyright
+
+#copier updated
