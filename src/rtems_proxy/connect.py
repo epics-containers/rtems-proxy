@@ -20,16 +20,19 @@ def ioc_connect(
     configure: bool = True,
     attach: bool = True,
     raise_errors: bool = False,
+    use_console: bool = False,
 ):
     """
     Entrypoint to make a connection to an RTEMS IOC over telnet.
     Once connected, enters an interactive user session with the IOC.
 
     args:
-    host_and_port: 'hostname:port' of the IOC to connect to
+    host_and_port: 'hostname:port' of the IOC to connect to, or the conserver
+                   console name if use_console is True
     reboot: reboot the IOC to pick up new binaries/startup/epics db
+    use_console: connect via conserver instead of telnet
     """
-    telnet = TelnetRTEMS(host_and_port, reboot)
+    telnet = TelnetRTEMS(host_and_port, ioc_reboot=reboot, use_console=use_console)
 
     try:
         telnet.connect()
