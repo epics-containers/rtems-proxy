@@ -100,14 +100,15 @@ wheels = [
 
 [[package]]
 name = "builder2ibek"
-version = "2.1.0"
+version = "2.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ibek" },
+    { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f6/89/2df11fb0d2f70be2e1e8039832afc41ef564cf5d00325cf445ea0f822173/builder2ibek-2.1.0.tar.gz", hash = "sha256:7dc775948fbe0283ae599aa378575a1b356caab1b499c945e9b8e502e3282c3f", size = 891427, upload-time = "2026-06-15T16:18:34.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/31/b0edac564e1d3f2f3eb65c2bf347c7f391328409e85e4c6a315ad8e49552/builder2ibek-2.6.0.tar.gz", hash = "sha256:caa97f268fcaab90ce386c937430faec8cb5cb1ab071781ed9eb52b144a13e3d", size = 1256362, upload-time = "2026-11-18T13:53:16.868Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/c6/5ddfea12aeeb5071a59a2837094ba7d15c3b90d3ec0d380040167df929a9/builder2ibek-2.1.0-py3-none-any.whl", hash = "sha256:7979cc08f1ae1de2689c587383dccc57e0028bca73317f4ada77b6e877874a54", size = 105613, upload-time = "2026-06-15T16:18:33.626Z" },
+    { url = "https://files.pythonhosted.org/packages/39/70/9d152701a977a71de4f95549f94c2000d878f20dae09c64ba760cbbc54c8/builder2ibek-2.6.0-py3-none-any.whl", hash = "sha256:ef953608d781666d75e65280db87f604daa7663e66bfaece1d8f6813e1490efe", size = 181339, upload-time = "2026-11-18T13:53:15.424Z" },
 ]
 
 [[package]]
@@ -473,7 +474,7 @@ wheels = [
 
 [[package]]
 name = "ibek"
-version = "4.11.1"
+version = "4.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitpython" },
@@ -485,9 +486,9 @@ dependencies = [
     { name = "truststore" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/4c/1747395796ca0690b72cf106ad578947fbfeda84c2644b8c3a4dcf1fd154/ibek-4.11.1.tar.gz", hash = "sha256:465d2c93b4bfcbb2c607fe3f7c30a7ff42419abdbbfbe3d8af827969ea942b10", size = 423107, upload-time = "2026-11-13T10:02:54.234Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/b5/163db1984a3b64bc41f5b34b7367af8e64c794c0d64def2e60d1a2946eed/ibek-4.12.1.tar.gz", hash = "sha256:6a3cd7b569845536efe69519d3063912de61afdb9abdc26a9c236054ed89ead1", size = 460435, upload-time = "2026-11-17T11:45:17.22Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/28/9b/208cc85320a2dd4845ad32622108702c957799f66c60d0a0f49cccc5316a/ibek-4.11.1-py3-none-any.whl", hash = "sha256:7591c46b82a0503fdf9818e54a2837ab6a1d4f28ff2a42f1691b7a23377e3556", size = 107213, upload-time = "2026-11-13T10:02:52.75Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/cd/7c4464fc6951fe194972499f9a76b20b136dd06c0ec23ecf67172dcdd43c/ibek-4.12.1-py3-none-any.whl", hash = "sha256:8841978d53479228b26d92e822fe8afa8c2b3ea4ef14a2436b12b6c3d70c7602", size = 124175, upload-time = "2026-11-17T11:45:15.789Z" },
 ]
 
 [[package]]
@@ -1262,7 +1263,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-ci = [{ name = "builder2ibek", specifier = "==2.1.0" }]
+ci = [{ name = "builder2ibek", specifier = "==2.6.0" }]
 dev = [
     { name = "copier" },
     { name = "myst-parser" },
