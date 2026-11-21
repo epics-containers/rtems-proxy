@@ -1,6 +1,6 @@
 # This container is bases on epics-base so that we have access to the msi tool
 # and CA client tools for diagnostics.
-FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec1 AS developer
+FROM ghcr.io/epics-containers/epics-base-developer:7.0.10ec6 AS developer
 
 # Add any system dependencies for the developer/build environment here
 # conserver-client provides /usr/bin/console for RTEMS_USE_CONSOLE mode
